@@ -1,7 +1,9 @@
 
-{-# LANGUAGE LambdaCase, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE
+  LambdaCase, GeneralizedNewtypeDeriving,
+  FlexibleContexts, TupleSections #-}
 
-module TicTacToe (game) where  
+module CBSD.TicTacToe where  
 
 import Control.Applicative
 import Control.Lens
@@ -15,7 +17,7 @@ import Data.Function
 import Data.Array (Array, (//), (!))
 import qualified Data.Array as A
 
-import Search
+import CBSD.Search
  
 data Cell     = Empty | Filled Player deriving (Eq, Show)
 data Result   = Win Player | Draw | Continue deriving (Eq, Show)
@@ -73,7 +75,7 @@ parseInp _ = Nothing
 nextMoveTTT' = nextMove True ((pure.).moves) (pure.heu)
 
 nextMoveTTT :: Player -> GState -> IO (Maybe Move)
-nextMoveTTT  = nextMoveTTT' alphaBeta (10*10^6) 10
+nextMoveTTT  = nextMoveTTT' alphaBeta (1*10^6) 10
 
 game :: GState -> IO ()
 game = fix $ \nextRound s -> do  

@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, GeneralizedNewtypeDeriving #-}
 
-module Potyogos where
+module CBSD.Potyogos where
 
 import Control.Monad
 import Data.Function
@@ -14,7 +14,7 @@ import Text.Printf
 import Data.Array (Array, (!), (//))
 import qualified Data.Array as A
 
-import Search
+import CBSD.Search
 
 
 data Cell     = Empty | Filled Player deriving (Eq, Show)
@@ -144,5 +144,3 @@ game = fix $ \nextRound s -> do
         (nextRound s)
         (\m -> nextRound $ s // [(fromJust $ makeMove s m, Filled PMin)])
         =<< nextMovePA PMin s
-
-main = game start

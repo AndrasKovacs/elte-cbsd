@@ -1,7 +1,7 @@
 
 {-# LANGUAGE LambdaCase, TupleSections, ViewPatterns, RankNTypes, FlexibleContexts #-}
 
-module Search (
+module CBSD.Search (
   
     Player(..)
   , Search
