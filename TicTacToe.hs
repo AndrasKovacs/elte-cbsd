@@ -18,6 +18,7 @@ import qualified Data.Array as A
 import Search
  
 data Cell     = Empty | Filled Player deriving (Eq, Show)
+data Result   = Win Player | Draw | Continue deriving (Eq, Show)
 type Move     = (Int, Int)
 type GState   = Array Move Cell
 newtype Score = Score Int deriving (Eq, Show, Ord, Num)
@@ -30,23 +31,28 @@ size    = 3 -- Don't change this! We're not actually parametric in size now.
 ixRange = ((1, 1), (size, size))
 start   = A.listArray ixRange $ repeat Empty
 
-gameResult :: GState -> Maybe Player
-gameResult s = wins^?_head where
-  horizontal = chunksOf size $ A.elems s
-  vertical   = transpose horizontal
-  diagonal   = (map . map) (s!)
-               [join zip [1..size], (zip <*> reverse) [1..size]]               
-  allLines   = horizontal ++ vertical ++ diagonal  
-  wins       = [p | c@(Filled p):cs <- allLines, all (==c) cs]
+result :: GState -> Result
+result s = case wins of
+  p:_  -> Win p
+  _    -> if ended then Draw else Continue
+  where
+    horizontal = chunksOf size $ A.elems s
+    vertical   = transpose horizontal
+    diagonal   = (map . map) (s!)
+                 [join zip [1..size], (zip <*> reverse) [1..size]]               
+    allLines   = horizontal ++ vertical ++ diagonal  
+    wins       = [p | c@(Filled p):cs <- allLines, all (==c) cs]
+    ended      = all (/=Empty) (A.elems s)
                
 moves :: Player -> GState -> [(GState, Move)]
-moves p s = maybe
-  [(s // [(ix, Filled p)], ix) | (ix, Empty) <- A.assocs s]
-  (const [])
-  (gameResult s)
+moves p s = case result s of
+  Continue -> [(s // [(ix, Filled p)], ix) | (ix, Empty) <- A.assocs s]
+  _        -> []
 
 heu :: GState -> Score
-heu = maybe 0 (\case PMax -> maxBound; _ -> minBound) . gameResult
+heu s = case result s of
+  Win p -> adjustHeu p $ maxBound
+  _     -> 0
 
 showTable :: GState -> String
 showTable s = unlines lines where
@@ -67,15 +73,17 @@ parseInp _ = Nothing
 nextMoveTTT' = nextMove True ((pure.).moves) (pure.heu)
 
 nextMoveTTT :: Player -> GState -> IO (Maybe Move)
-nextMoveTTT  = nextMoveTTT' negaAlphaBeta (10*10^6) 10
+nextMoveTTT  = nextMoveTTT' alphaBeta (10*10^6) 10
 
 game :: GState -> IO ()
 game = fix $ \nextRound s -> do  
   putStrLn $ showTable s
-  case gameResult s of
-    Just PMax -> putStrLn "You won"
-    Just PMin -> putStrLn "You lost"
-    _         -> do
+  
+  case result s of
+    Win PMax -> putStrLn "You won"
+    Win PMin -> putStrLn "You lost"
+    Draw     -> putStrLn "It's a draw"
+    Continue -> do
       
       s <- fix $ \tryMove -> do
         inp <- fix $ \tryInp -> maybe
@@ -86,8 +94,7 @@ game = fix $ \nextRound s -> do
           _     -> putStrLn "Cell already filled" >> tryMove
           
       maybe
-        (do putStrLn $ showTable s
-            putStrLn "It's a draw")
+        (nextRound s)
         (\move -> nextRound $ s // [(move, Filled PMin)])
         =<< nextMoveTTT PMin s
 

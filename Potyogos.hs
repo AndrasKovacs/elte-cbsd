@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, GeneralizedNewtypeDeriving #-}
 
-module Main where
+module Potyogos where
 
 import Control.Monad
 import Data.Function
@@ -18,6 +18,7 @@ import Search
 
 
 data Cell     = Empty | Filled Player deriving (Eq, Show)
+data Result   = Win Player | Draw | Continue deriving (Eq, Show)
 type Ix       = (Int, Int)
 type Move     = Int
 type GState   = Array Ix Cell
@@ -53,36 +54,38 @@ diagIxs = filter ((>=4).length) $ stripe colIxs ++ stripe (reverse colIxs)
     zipCons (x:xs) (y:ys) = (x:y) : zipCons xs ys
     
 allIxs = rowIxs ++ colIxs ++ diagIxs
-
        
-result :: GState -> Maybe (Maybe Player)
-result s = wins^?_head <$ guard (not end) where
-  runs = group . map (s!) =<< allIxs
-  wins = [p | run@(Filled p:_) <- runs, length run == 4]
-  end  = all (/=Empty) $ A.elems s
-
+result :: GState -> Result
+result s = case wins of
+  p:_ -> Win p
+  _   -> if ended then Draw else Continue
+  where
+    runs   = group . map (s!) =<< allIxs
+    wins   = [p | run@(Filled p:_) <- runs, length run == 4]
+    ended  = all (/=Empty) $ A.elems s
+    
 
 dropPiece :: GState -> [Ix] -> Maybe Ix
 dropPiece s = find ((==Empty) . (s!)) . reverse
 
 makeMove :: GState -> Move -> Maybe Ix
-makeMove s m = dropPiece s (colIxs !! m)
+makeMove s m = dropPiece s (range ((1, m), (rows, m)))
 
 moves :: Player -> GState -> [(GState, Move)]
-moves p s = maybe
-  [(s // [(ix, Filled p)], snd ix) |
-     Just ix <- map (dropPiece s) colIxs]
-  (const [])
-  (result s)
+moves p s = case result s of
+  Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (dropPiece s) colIxs]
+  _        -> []
 
 dumbHeu :: GState -> Score
 dumbHeu s = case result s of
-  Just (Just PMax) -> maxBound
-  Just (Just PMin) -> minBound
-  _                -> 0
+  Win p -> adjustHeu p $ maxBound
+  _     -> 0
 
-smartHeu :: GState -> Score
-smartHeu s = sum $ map score neighs where
+-- Could be much smarter:
+-- Penalize the amount of empty space that must
+-- be filled up before we can make a winning play
+smarterHeu :: GState -> Score
+smarterHeu s = sum $ map score neighs where
 
   groupNeighs :: [[Cell]] -> [([Cell], [Cell])]
   groupNeighs = go [] where
@@ -92,13 +95,13 @@ smartHeu s = sum $ map score neighs where
 
   groups  = map (group . map (s!)) allIxs
   neighs  = groupNeighs =<< groups
-  adjust  = \case PMax -> id; _ -> negate
   
   score (g@(Filled p:_), ns) =
     case (length g, length $ filter (==Empty) ns) of
-      (4, _) -> Score $ adjust p maxBound
-      (g, e) -> Score $ if g + e >= 4 then adjust p (g + e) else 0
+      (4, _) -> Score $ adjustHeu p maxBound
+      (g, e) -> Score $ if g + e >= 4 then adjustHeu p g else 0
   score _ = 0
+
 
 showTable :: GState -> String
 showTable s = unlines lines where
@@ -108,26 +111,26 @@ showTable s = unlines lines where
     _           -> ' '      
   str   = map showCell $ A.elems s
   lines = take cols ['A'..] : take cols (repeat '-') : chunksOf cols str
-     ++ [take cols (repeat '-')]
+     ++ [take cols (repeat '-'), take cols ['A'..]]
 
 parseInp :: String -> Maybe Move
-parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A')
+parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
 parseInp _ = Nothing
 
-nextMovePA' = nextMove True ((pure.).moves) (pure.smartHeu)
+nextMovePA' = nextMove True ((pure.).moves) (pure.smarterHeu)
 
 nextMovePA :: Player -> GState -> IO (Maybe Move)
-nextMovePA  = nextMovePA' (orderWith 0 minimax alphaBeta) (5*10^5) maxBound
+nextMovePA  = nextMovePA' (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
 
 game :: GState -> IO ()
 game = fix $ \nextRound s -> do  
   putStrLn $ showTable s
 
   case result s of
-    Just (Just PMax) -> putStrLn "You won"
-    Just (Just PMin) -> putStrLn "You lost"
-    Nothing          -> putStrLn "It's a draw"
-    _                -> do
+    Win PMax -> putStrLn "You won"
+    Win PMin -> putStrLn "You lost"
+    Draw     -> putStrLn "It's a draw"
+    Continue -> do
       
       s <- fix $ \tryMove -> do
         m <- fix $ \tryInp -> maybe
@@ -138,8 +141,7 @@ game = fix $ \nextRound s -> do
           _       -> putStrLn "Full column" >> tryMove
                 
       maybe
-        (do putStrLn $ showTable s
-            putStrLn "It's a draw")
+        (nextRound s)
         (\m -> nextRound $ s // [(fromJust $ makeMove s m, Filled PMin)])
         =<< nextMovePA PMin s
 

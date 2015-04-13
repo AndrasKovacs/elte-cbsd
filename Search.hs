@@ -7,6 +7,7 @@ module Search (
   , Search
   , Timeout(..)
   , Depth
+  , adjustHeu
     
   , nextMove    
   , minimax
@@ -64,7 +65,7 @@ nextMove verbose moves heu alg timeout maxDepth p s = do
         go (d + 1)
   
   defaultMove  <- moves p s <&> (^? _head._2)
-  computedMove <- runTimeoutWHNF timeout $ go 1
+  computedMove <- runTimeoutWHNF timeout $ go 2
 
   when verbose $ 
     printf "nextMove: score and max depth: %s\n\n"
