@@ -16,21 +16,17 @@ import Data.Array (Array, (//), (!))
 import qualified Data.Array as A
 
 import Search
-import IDS
-
-
  
 data Cell     = Empty | Filled Player deriving (Eq, Show)
 type Move     = (Int, Int)
 type GState   = Array Move Cell
-type Win      = Maybe Player
 newtype Score = Score Int deriving (Eq, Show, Ord, Num)
  
 instance Bounded Score where
-  maxBound = Score 1
-  minBound = Score (-1)
+  maxBound = Score (maxBound - 1)
+  minBound = Score (minBound + 2)
   
-size    = 3 -- Don't change this now! 
+size    = 3 -- Don't change this! We're not actually parametric in size now.
 ixRange = ((1, 1), (size, size))
 start   = A.listArray ixRange $ repeat Empty
 
@@ -68,21 +64,18 @@ parseInp (col:row:[])
       Just (ord row - ord '1' + 1 , ord col - ord 'A' + 1)
 parseInp _ = Nothing
 
-nextStepTTT ::
-  TreeSearch (Timeout Move) Score GState Move ->
-  Player -> GState -> IO (Maybe Move)
-nextStepTTT alg = ids (alg ((pure.).moves) (pure.heu)) (2*10^6) 10
+nextMoveTTT' = nextMove True ((pure.).moves) (pure.heu)
 
-game ::
-  TreeSearch (Timeout Move) Score GState Move
-  -> GState -> IO ()
-game alg = fix $ \nextRound s -> do  
+nextMoveTTT :: Player -> GState -> IO (Maybe Move)
+nextMoveTTT  = nextMoveTTT' negaAlphaBeta (10*10^6) 10
+
+game :: GState -> IO ()
+game = fix $ \nextRound s -> do  
   putStrLn $ showTable s
-  case (all (/=Empty) (A.elems s), gameResult s) of
-    (_, Just PMax) -> putStrLn "You won"
-    (_, Just PMin) -> putStrLn "You lost"
-    (True, _)      -> putStrLn "It's a draw"
-    _              -> do
+  case gameResult s of
+    Just PMax -> putStrLn "You won"
+    Just PMin -> putStrLn "You lost"
+    _         -> do
       
       s <- fix $ \tryMove -> do
         inp <- fix $ \tryInp -> maybe
@@ -92,6 +85,9 @@ game alg = fix $ \nextRound s -> do
           Empty -> pure $ s // [(inp, Filled PMax)]
           _     -> putStrLn "Cell already filled" >> tryMove
           
-      move <- nextStepTTT alg PMin s
-      nextRound $ maybe s (\m -> s // [(m, Filled PMin)]) move   
+      maybe
+        (do putStrLn $ showTable s
+            putStrLn "It's a draw")
+        (\move -> nextRound $ s // [(move, Filled PMin)])
+        =<< nextMoveTTT PMin s
 
