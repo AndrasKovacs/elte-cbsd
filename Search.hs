@@ -8,6 +8,7 @@ module Search (
   , Timeout(..)
   , Depth
   , adjustHeu
+  , switch
     
   , nextMove    
   , minimax

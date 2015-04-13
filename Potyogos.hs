@@ -81,7 +81,7 @@ dumbHeu s = case result s of
   Win p -> adjustHeu p $ maxBound
   _     -> 0
 
--- Could be much smarter:
+-- Could be still smarter:
 -- Penalize the amount of empty space that must
 -- be filled up before we can make a winning play
 smarterHeu :: GState -> Score
