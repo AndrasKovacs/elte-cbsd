@@ -86,7 +86,6 @@ dumbHeu s = case result s of
   Win p -> adjustHeu p maxBound
   _     -> 0
 
-
 smarterHeu :: GState -> Score
 smarterHeu s = foldM score 0 neighs ^. chosen where
 
@@ -104,8 +103,7 @@ smarterHeu s = foldM score 0 neighs ^. chosen where
     case (length g, length $ filter (==Empty) ns) of
       (4, _) -> Left $ adjustHeu p maxBound
       (g, e) -> Right $ acc + (if g + e >= 4 then adjustHeu p (Score g) else 0)
-  score acc _ = Right acc
-  
+  score acc _ = Right acc  
   
 
 showTable :: GState -> String
