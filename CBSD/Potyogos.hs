@@ -14,6 +14,8 @@ import Text.Printf
 import Data.Array (Array, (!), (//))
 import qualified Data.Array as A
 
+import Debug.Trace
+
 import CBSD.Search
 
 
@@ -81,29 +83,30 @@ moves p s = case result s of
 
 dumbHeu :: GState -> Score
 dumbHeu s = case result s of
-  Win p -> adjustHeu p $ maxBound
+  Win p -> adjustHeu p maxBound
   _     -> 0
 
--- Smarter but buggy currently
 
--- smarterHeu :: GState -> Score
--- smarterHeu s = sum $ map score neighs where
+smarterHeu :: GState -> Score
+smarterHeu s = foldM score 0 neighs ^. chosen where
 
---   groupNeighs :: [[Cell]] -> [([Cell], [Cell])]
---   groupNeighs = go [] where
---     go ls []        = []
---     go ls [g]       = [(g, ls)]
---     go ls (g:g':gs) = (g, ls ++ g') : go g (g':gs)      
+  groupNeighs :: [[Cell]] -> [([Cell], [Cell])]
+  groupNeighs = go [] where
+    go ls []        = []
+    go ls [g]       = [(g, ls)]
+    go ls (g:g':gs) = (g, ls ++ g') : go g (g':gs)      
 
---   groups  = map (group . map (s!)) allIxs
---   neighs  = groupNeighs =<< groups
+  groups  = map (group . map (s!)) allIxs
+  neighs  = groupNeighs =<< groups
+
+  score :: Score -> ([Cell], [Cell]) -> Either Score Score
+  score acc (g@(Filled p:_), ns) =
+    case (length g, length $ filter (==Empty) ns) of
+      (4, _) -> Left $ adjustHeu p maxBound
+      (g, e) -> Right $ acc + (if g + e >= 4 then adjustHeu p (Score g) else 0)
+  score acc _ = Right acc
   
---   score (g@(Filled p:_), ns) =
---     case (length g, length $ filter (==Empty) ns) of
---       (4, _) -> Score $ adjustHeu p maxBound
---       (g, e) -> Score $ if g + e >= 4 then adjustHeu p g else 0
---   score _ = 0
-
+  
 
 showTable :: GState -> String
 showTable s = unlines lines where
@@ -120,12 +123,12 @@ parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
 parseInp _ = Nothing
 
 
-mkSearch = nextMove True ((pure.).moves) (pure.dumbHeu)
+mkSearch = nextMove True ((pure.).moves) (pure.smarterHeu)
 
 -- I don't actually know how hard these are
-easy   = mkSearch alphaBeta (1*10^6) 3
+easy   = mkSearch alphaBeta (1*10^6) 2
 medium = mkSearch alphaBeta (1*10^6) 4
-hard   = mkSearch alphaBeta (1*10^6) maxBound
+hard   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
 
 
 game :: (Player -> GState -> IO (Maybe Move)) -> GState -> IO ()
