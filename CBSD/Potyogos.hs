@@ -84,26 +84,25 @@ dumbHeu s = case result s of
   Win p -> adjustHeu p $ maxBound
   _     -> 0
 
--- Could be still smarter:
--- Penalize the amount of empty space that must
--- be filled up before we can make a winning play
-smarterHeu :: GState -> Score
-smarterHeu s = sum $ map score neighs where
+-- Smarter but buggy currently
 
-  groupNeighs :: [[Cell]] -> [([Cell], [Cell])]
-  groupNeighs = go [] where
-    go ls []        = []
-    go ls [g]       = [(g, ls)]
-    go ls (g:g':gs) = (g, ls ++ g') : go g (g':gs)      
+-- smarterHeu :: GState -> Score
+-- smarterHeu s = sum $ map score neighs where
 
-  groups  = map (group . map (s!)) allIxs
-  neighs  = groupNeighs =<< groups
+--   groupNeighs :: [[Cell]] -> [([Cell], [Cell])]
+--   groupNeighs = go [] where
+--     go ls []        = []
+--     go ls [g]       = [(g, ls)]
+--     go ls (g:g':gs) = (g, ls ++ g') : go g (g':gs)      
+
+--   groups  = map (group . map (s!)) allIxs
+--   neighs  = groupNeighs =<< groups
   
-  score (g@(Filled p:_), ns) =
-    case (length g, length $ filter (==Empty) ns) of
-      (4, _) -> Score $ adjustHeu p maxBound
-      (g, e) -> Score $ if g + e >= 4 then adjustHeu p g else 0
-  score _ = 0
+--   score (g@(Filled p:_), ns) =
+--     case (length g, length $ filter (==Empty) ns) of
+--       (4, _) -> Score $ adjustHeu p maxBound
+--       (g, e) -> Score $ if g + e >= 4 then adjustHeu p g else 0
+--   score _ = 0
 
 
 showTable :: GState -> String
@@ -121,11 +120,12 @@ parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
 parseInp _ = Nothing
 
 
-mkSearch = nextMove True ((pure.).moves) (pure.smarterHeu)
+mkSearch = nextMove True ((pure.).moves) (pure.dumbHeu)
+
 -- I don't actually know how hard these are
-easy   = mkSearch alphaBeta (1*10^6) 2
-medium = mkSearch alphaBeta (1*10^6) 3
-hard   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
+easy   = mkSearch alphaBeta (1*10^6) 3
+medium = mkSearch alphaBeta (1*10^6) 4
+hard   = mkSearch alphaBeta (1*10^6) maxBound
 
 
 game :: (Player -> GState -> IO (Maybe Move)) -> GState -> IO ()

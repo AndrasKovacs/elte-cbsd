@@ -22,6 +22,8 @@ main = do
   putStrLn "Make your move by entering the letter code for a column."
   putStrLn ""
   game difficulty start
+  getLine
+  pure ()
 
 
   
