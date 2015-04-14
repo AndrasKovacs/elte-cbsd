@@ -108,7 +108,7 @@ start = empty // (p1Start ++ p2Start) where
   empty   = UV.fromList $ replicate vecSize Empty
   p1Start = map (,Filled PMax) [ix2 0 0, ix2 (size - 1) (size - 1)]
   p2Start = map (,Filled PMin) [ix2 (size - 1) 0, ix2 0 (size - 1)]
-  blocks  = 
+--  blocks  = 
   
 
 -- nextMoveAtaxx' = nextMove True ((pure.).moves) (pure.heu)

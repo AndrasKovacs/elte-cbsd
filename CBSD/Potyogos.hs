@@ -120,13 +120,16 @@ parseInp :: String -> Maybe Move
 parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
 parseInp _ = Nothing
 
-nextMovePA' = nextMove True ((pure.).moves) (pure.smarterHeu)
 
-nextMovePA :: Player -> GState -> IO (Maybe Move)
-nextMovePA  = nextMovePA' (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
+mkSearch = nextMove True ((pure.).moves) (pure.smarterHeu)
+-- I don't actually know how hard these are
+easy   = mkSearch alphaBeta (1*10^6) 2
+medium = mkSearch alphaBeta (1*10^6) 3
+hard   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
 
-game :: GState -> IO ()
-game = fix $ \nextRound s -> do  
+
+game :: (Player -> GState -> IO (Maybe Move)) -> GState -> IO ()
+game nextMove = fix $ \nextRound s -> do  
   putStrLn $ showTable s
 
   case result s of
@@ -146,4 +149,4 @@ game = fix $ \nextRound s -> do
       maybe
         (nextRound s)
         (nextRound . fromJust . makeMove PMin s)
-        =<< nextMovePA PMin s
+        =<< nextMove PMin s
