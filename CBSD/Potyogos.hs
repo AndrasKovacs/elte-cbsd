@@ -65,15 +65,18 @@ result s = case wins of
     ended  = all (/=Empty) $ A.elems s
     
 
-dropPiece :: GState -> [Ix] -> Maybe Ix
-dropPiece s = find ((==Empty) . (s!)) . reverse
+dropIndex :: GState -> [Ix] -> Maybe Ix
+dropIndex s = find ((==Empty) . (s!)) . reverse
 
-makeMove :: GState -> Move -> Maybe Ix
-makeMove s m = dropPiece s (range ((1, m), (rows, m)))
+moveIndex :: GState -> Move -> Maybe Ix
+moveIndex s m = dropIndex s (range ((1, m), (rows, m)))
+
+makeMove :: Player -> GState -> Move -> Maybe GState
+makeMove p s m = moveIndex s m <&> (\ix -> s // [(ix, Filled p)])
 
 moves :: Player -> GState -> [(GState, Move)]
 moves p s = case result s of
-  Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (dropPiece s) colIxs]
+  Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (dropIndex s) colIxs]
   _        -> []
 
 dumbHeu :: GState -> Score
@@ -136,11 +139,11 @@ game = fix $ \nextRound s -> do
         m <- fix $ \tryInp -> maybe
           (putStrLn "Invalid input" >> tryInp)
           pure =<< parseInp <$> getLine
-        case makeMove s m of
+        case moveIndex s m of
           Just ix -> pure $ s // [(ix, Filled PMax)]
           _       -> putStrLn "Full column" >> tryMove
                 
       maybe
         (nextRound s)
-        (\m -> nextRound $ s // [(fromJust $ makeMove s m, Filled PMin)])
+        (nextRound . fromJust . makeMove PMin s)
         =<< nextMovePA PMin s
