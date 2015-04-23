@@ -10,11 +10,8 @@ import Control.Lens
 import Data.Ix (inRange, range)
 import Data.Char
 import Data.Maybe
-import Text.Printf
 import Data.Array (Array, (!), (//))
 import qualified Data.Array as A
-
-import Debug.Trace
 
 import CBSD.Search
 
