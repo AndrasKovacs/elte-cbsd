@@ -1,40 +1,55 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE
+  GeneralizedNewtypeDeriving, LambdaCase,
+  ScopedTypeVariables, OverloadedStrings #-}
 
 module CBSD.Common where
 
 import Control.Applicative
 import Control.Monad
 import Data.Aeson
+import Data.Aeson.Types
 
 import CBSD.Search
 
-data Cell   = Empty | Filled Player | Block deriving (Eq, Show)
 data Result = Win Player | Draw | Continue deriving (Eq, Show)
-
 newtype Score = Score Int deriving (Eq, Show, Ord, Num)
 
 instance Bounded Score where
   maxBound = Score (maxBound - 1)
-  minBound = Score (minBound + 2)
-  
+  minBound = Score (minBound + 2)  
 
-instance ToJSON Player where
-  toJSON = \case PMax -> Number 1; _ -> Number 2
+data HeuMsg state
+  = Close
+  | Eval state Player
+  | EvalRe Int
+  deriving (Eq, Show)
 
-instance FromJSON Player where
-  parseJSON = withScientific "" $ \case
-    1 -> pure PMax
-    2 -> pure PMin
-    _ -> empty
+heuToJSON :: ToJSON strep => (state -> strep) -> HeuMsg state -> Value
+heuToJSON stateToRep = \case
+  Close -> object [
+    "messageType" .= String "CLOSE"
+    ]
+  Eval state player -> object [
+    "messageType" .= String "EVAL",
+    "state" .= object [
+      "board"      .= stateToRep state,
+      "nextPlayer" .= player
+      ]
+    ]
+  EvalRe score -> object [
+    "messageType" .= String "EVAL_RE",
+    "stateValue"  .= score
+    ]
 
-instance ToJSON Cell where
-  toJSON = \case
-    Filled PMax -> Number 1
-    Filled PMin -> Number 2
-    Empty       -> Number 0  -- We conflate Empty and Blocked!!!
-    Block       -> Number 0
-
-instance FromJSON Cell where
-  parseJSON v =
-        (Filled <$> parseJSON v)
-    <|> (Empty  <$ withScientific "" (guard . (==0)) v)
+parseHeu ::
+  forall state strep. FromJSON strep =>
+  (strep -> state) -> Value -> Parser (HeuMsg state)
+parseHeu convState = withObject "" $ \obj -> do
+  (tag :: String) <- obj .: "messageType"
+  case tag of 
+    "CLOSE"   -> pure Close
+    "EVAL"    -> do
+      state <- obj .: "state"
+      Eval <$> (convState <$> (state .: "board")) <*> state .: "nextPlayer"
+    "EVAL_RE" -> EvalRe <$> obj .: "stateValue"
+    _         -> empty

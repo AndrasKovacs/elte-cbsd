@@ -20,8 +20,10 @@ import Data.Maybe
 import qualified Data.Vector.Unboxed as UV
 import qualified Data.Vector.Unboxed.Mutable as MUV
 import qualified Data.Vector as V
-import Data.Vector.Unboxed.Deriving
-import Data.Aeson hiding (Result)
+import           Data.Vector.Unboxed.Deriving
+
+import Data.Aeson.Types hiding (Result)
+import Data.Aeson       hiding (Result)
 
 import CBSD.Search
 import CBSD.Common
@@ -29,6 +31,7 @@ import CBSD.Common
 
 --------------------------------------------------
 
+data Cell   = Filled Player | Empty | Block deriving (Eq, Show)
 type Ix     = Int
 type Move   = (Ix, Ix) -- Jump from-to
 type GState = UV.Vector Cell
@@ -145,45 +148,22 @@ showTable s = unlines lines where
 
 -- Messages
 --------------------------------------------------
-    
-data HeuMsg
-  = Close
-  | Eval GState Player
-  | EvalRe Int
-  deriving (Eq, Show)
 
-toBoardRep :: GState -> [[Cell]]
-toBoardRep = chunksOf size . UV.toList
 
-fromBoardRep :: [[Cell]] -> GState
-fromBoardRep = (//blocks) . UV.fromList . join
+instance ToJSON Cell where
+  toJSON (Filled p) = toJSON p
+  toJSON _          = Number 0 -- We conflate Empty and Blocked!!!
 
-instance ToJSON HeuMsg where
-  toJSON Close = object [
-    "messageType" .= String "CLOSE"
-    ]
-  toJSON (Eval board player) = object [
-    "messageType" .= String "EVAL",
-    "state" .= object [
-      "board"      .= toBoardRep board,
-      "nextPlayer" .= player
-      ]
-    ]
-  toJSON (EvalRe score) = object [
-    "messageType" .= String "EVAL_RE",
-    "stateValue" .= score
-    ]
-  
-instance FromJSON HeuMsg where
-  parseJSON = withObject "" $ \obj -> do
-    (tag :: String) <- obj .: "messageType"
-    case tag of 
-      "CLOSE"   -> pure Close
-      "EVAL"    -> do
-        state <- obj .: "state"
-        Eval <$> (fromBoardRep <$> (state .: "board")) <*> state .: "nextPlayer"
-      "EVAL_RE" -> EvalRe <$> obj .: "stateValue"
-      _         -> empty
+instance FromJSON Cell where
+  parseJSON v =
+        (Filled <$> parseJSON v)
+    <|> (Empty  <$ withScientific "" (guard . (==0)) v)
+
+heuToJSON :: HeuMsg GState -> Value
+heuToJSON = CBSD.Common.heuToJSON (chunksOf size . UV.toList)
+
+parseHeu :: Value -> Parser (HeuMsg GState)
+parseHeu = CBSD.Common.parseHeu ((//blocks) . UV.fromList . join)
 
 
 -- Test game
@@ -232,6 +212,7 @@ game nextMove = fix $ \nextRound s -> do
        Continue ->
          nextRound . fromJust . makeMove PMin s
          =<< fromJust <$> nextMove PMin s
+
 
 
 

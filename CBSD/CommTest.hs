@@ -16,15 +16,6 @@ import Control.Exception
 import Control.Lens hiding ((.=))
 import Text.Printf
 
-import qualified Data.Text as T
-
-
-
-
-
-
-
-
 
 portNum :: PortNumber
 portNum = 6456

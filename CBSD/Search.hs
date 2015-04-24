@@ -29,8 +29,20 @@ import Control.Monad.IO.Class
 import System.Timeout.Returning
 import Text.Printf
 
+import Data.Aeson
+
 type Depth = Int
 data Player = PMax | PMin deriving (Eq, Show)
+
+instance ToJSON Player where
+  toJSON = \case PMax -> Number 1; _ -> Number 2
+
+instance FromJSON Player where
+  parseJSON = withScientific "" $ \case
+    1 -> pure PMax
+    2 -> pure PMin
+    _ -> empty
+
                          
 type Search m score state move =
      (Ord score, Monad m)

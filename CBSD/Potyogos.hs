@@ -1,8 +1,9 @@
-{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, OverloadedStrings #-}
 
 module CBSD.Potyogos where
 
 import Control.Monad
+import Control.Applicative
 import Data.Function
 import Data.List
 import Data.List.Split
@@ -13,19 +14,17 @@ import Data.Maybe
 import Data.Array (Array, (!), (//))
 import qualified Data.Array as A
 
+import Data.Aeson hiding (Result, Array)
+import Data.Aeson.Types hiding (Result, Array)
+
 import CBSD.Search
+import CBSD.Common
 
+type Ix     = (Int, Int)
+type Move   = Int
+type GState = Array Ix Cell
+data Cell   = Empty | Filled Player deriving (Eq, Show)
 
-data Cell     = Empty | Filled Player deriving (Eq, Show)
-data Result   = Win Player | Draw | Continue deriving (Eq, Show)
-type Ix       = (Int, Int)
-type Move     = Int
-type GState   = Array Ix Cell
-newtype Score = Score Int deriving (Eq, Show, Ord, Num)
- 
-instance Bounded Score where
-  maxBound = Score (maxBound - 1)
-  minBound = Score (minBound + 2)
     
 cols, rows :: Int
 cols    = 7
@@ -36,7 +35,6 @@ ixRange = ((1, 1), (rows, cols))
 
 start :: GState
 start = A.listArray ixRange $ repeat Empty
-
 
 rowIxs, diagIxs, colIxs, allIxs :: [[Ix]]
 rowIxs  = [[(i, j) | j <- [1..cols]] | i <- [1..rows]]
@@ -62,7 +60,19 @@ result s = case wins of
     runs   = group . map (s!) =<< allIxs
     wins   = [p | run@(Filled p:_) <- runs, length run == 4]
     ended  = all (/=Empty) $ A.elems s
-    
+
+showTable :: GState -> String
+showTable s = unlines lines where
+  showCell = \case
+    Filled PMax -> 'x'
+    Filled PMin -> 'o'
+    _           -> ' '      
+  str   = map showCell $ A.elems s
+  lines = take cols ['A'..] : take cols (repeat '-') : chunksOf cols str
+     ++ [take cols (repeat '-'), take cols ['A'..]]
+
+     
+--------------------------------------------------    
 
 dropIndex :: GState -> [Ix] -> Maybe Ix
 dropIndex s = find ((==Empty) . (s!)) . reverse
@@ -77,6 +87,9 @@ moves :: Player -> GState -> [(GState, Move)]
 moves p s = case result s of
   Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (dropIndex s) colIxs]
   _        -> []
+  
+
+--------------------------------------------------  
 
 dumbHeu :: GState -> Score
 dumbHeu s = case result s of
@@ -100,31 +113,37 @@ smarterHeu s = foldM score 0 neighs ^. chosen where
     case (length g, length $ filter (==Empty) ns) of
       (4, _) -> Left $ adjustHeu p maxBound
       (g, e) -> Right $ acc + (if g + e >= 4 then adjustHeu p (Score g) else 0)
-  score acc _ = Right acc  
-  
+  score acc _ = Right acc
 
-showTable :: GState -> String
-showTable s = unlines lines where
-  showCell = \case
-    Filled PMax -> 'x'
-    Filled PMin -> 'o'
-    _           -> ' '      
-  str   = map showCell $ A.elems s
-  lines = take cols ['A'..] : take cols (repeat '-') : chunksOf cols str
-     ++ [take cols (repeat '-'), take cols ['A'..]]
+
+--------------------------------------------------
+
+instance ToJSON Cell where
+  toJSON (Filled p) = toJSON p
+  toJSON Empty      = Number 0
+
+instance FromJSON Cell where
+  parseJSON v =
+        (Filled <$> parseJSON v)
+    <|> (Empty  <$ withScientific "" (guard . (==0)) v)
+
+heuToJSON :: HeuMsg GState -> Value
+heuToJSON = CBSD.Common.heuToJSON (chunksOf cols . A.elems)
+
+parseHeu :: Value -> Parser (HeuMsg GState)
+parseHeu = CBSD.Common.parseHeu (A.listArray ixRange . join)
+
+--------------------------------------------------
+
 
 parseInp :: String -> Maybe Move
 parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
 parseInp _ = Nothing
 
-
 mkSearch = nextMove True ((pure.).moves) (pure.smarterHeu)
-
--- I don't actually know how hard these are
 easy   = mkSearch alphaBeta (1*10^6) 2
 medium = mkSearch alphaBeta (1*10^6) 4
 hard   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
-
 
 game :: (Player -> GState -> IO (Maybe Move)) -> GState -> IO ()
 game nextMove = fix $ \nextRound s -> do  
@@ -148,3 +167,4 @@ game nextMove = fix $ \nextRound s -> do
         (nextRound s)
         (nextRound . fromJust . makeMove PMin s)
         =<< nextMove PMin s
+
