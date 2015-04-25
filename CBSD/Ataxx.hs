@@ -159,12 +159,6 @@ instance FromJSON Cell where
         (Filled <$> parseJSON v)
     <|> (Empty  <$ withScientific "" (guard . (==0)) v)
 
-heuToJSON :: HeuMsg GState -> Value
-heuToJSON = CBSD.Common.heuToJSON (chunksOf size . UV.toList)
-
-parseHeu :: Value -> Parser (HeuMsg GState)
-parseHeu = CBSD.Common.parseHeu ((//blocks) . UV.fromList . join)
-
 
 -- Test game
 --------------------------------------------------    

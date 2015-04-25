@@ -1,0 +1,361 @@
+ÁLTALÁNOS
+---------
+- A get tree list-nél van nyitott kérdés!
+- Kidobtam a messageId-t. Bármikor visszatehetjük, de jelenleg indokolatlannak érzem: TCP-t használunk, nem UDP-t, így garantálva van a sorrendiség, etc.
+- A hibaüzeneteket nem tettem bele, az mindenhol ugyan úgy fog kinézni! (Ez megegyezik az előző változattal)
+- A state valami interface lesz. Ez még kidolgozás alatt, amit biztos kell tartalmaznia, hogy még fut e a játék, vagy valaki megnyerte. Ezen túl kell a játékok konkrét dolgait tartalmaznia, amire vagy kitalálunk általános formát, vagy leszármaztatunk
+
+SHUTDOWN GAME SERVER
+--------------------
+
+    MEGJEGYZÉS: nem json üzenet
+
+CONNECT TO GAME SERVER
+----------------------
+
+    CÉL: Regisztráció a központi modulhoz
+
+    IRÁNY: gui/gametree/gamelogic --> gameserver
+
+    KÉRÉS:
+    {
+        "messageType" : "CONNECT",
+        "content" : {
+            "name" : "I am client 1",
+            "type" : "GUI",
+            "games" : ["fox", "antrax"],
+            "port" : 1235
+        }
+    }
+
+    name (string): Ezt a nevet fogja kiszolgálni a központi modul amikor adatot ad ki a komponensről
+    type (enumeration): Milyen típusú komponens regisztrál be. Lehet: GUI, GAMETREE, GAMELOGIC
+    games (list of sting): Az adott komponens által támogatott játékok listája. Ha nincs megadva, akkor mindent támogat.
+    port (integer): Annak a socketnek a száma, amin a regisztráló komponens figyel
+    Megjegyzés: a fához ha például random heurisztika van megadva, akkor nem kell megadni játékot, mindegyikhez használható, de például egy játéklogika csak egyhez.
+
+    VÁLASZ:
+    {
+        "messageType" : "CONNECT",
+        "content" : {
+            "result" : "OK",
+            "id" : 5
+        }
+    }
+
+    result (enumeration): Sikeresség-indikátor, siker esetén OK
+    id (integer): A kapcsolódás egyedi azonosítója.
+
+GET GAME LIST FROM GAME SERVER
+------------------------------
+
+    CÉL: Visszaadja az elérhető (regisztrált) játékok listáját, választás céljából
+
+    IRÁNY: gui --> gameserver
+
+    KÉRÉS:
+    {
+        "messageType" : "GET_GAME_LIST"
+    }
+
+    VÁLASZ:
+    {
+        "messageType" : "GET_GAME_LIST",
+        "content" : {
+            "result" : "OK",
+            "items" : [
+                {
+                    "id" : 1,
+                    "name" : "Game name 1"
+                },
+                {
+                    "id" : 2,
+                    "name" : "Game name 2"
+                }
+            ]
+        }
+    }
+
+    id (integer): A játéklogika regisztrációjakor kapott azonosító, hivatkozási alapként szolgál játék indításakor
+    name (string): A játéklogika regisztrációjakor megadott név, a felületre kiírás céljából
+
+
+GET TREE LIST FROM GAME SERVER
+------------------------------
+
+    CÉL: Visszaadja az elérhető (regisztrált) játékfák listáját az adott játékhoz, választás céljából.
+
+    IRÁNY: gui --> gameserver
+
+    KÉRÉS:
+    {
+        "messageType" : "GET_TREE_LIST",
+        "content" : {
+            "game" : "fox"
+        }
+    }
+
+    game (string): A játék amihez a fát szeretnénk (A heurisztika miatt játékspecifikus). A játék nevének a regisztrációkor megadott szöveggel kell megegyeznie
+
+    VÁLASZ:
+    {
+        "messageType" : "GET_TREE_LIST",
+        "content" : {
+            "result" : "OK",
+            "items" : [
+                {
+                    "id" : 1,
+                    "name" : "AlphaBeta Tree"
+                },
+                {
+                    "id" : 2,
+                    "name" : "MinMax Tree"
+                },
+            ]
+        }
+    }
+
+    id (integer): Az adott fa azonosítója, választáshoz
+    name (string): Az adott fa neve listázáshoz
+
+GET START STATE
+---------------
+
+    CÉL: a jéték kezdőállapotának összeállítása
+
+    IRÁNY: gameserver --> gamelogic
+
+    KÉRÉS:
+    {
+        "messageType" : "GET_START_STATE"
+    }
+
+    VÁLASZ:
+    {
+        "messageType" : "GET_START_STATE",
+        "content" : {
+            "state": {
+                -- JÁTÉKFÜGGŐ
+            }
+        }
+    }
+
+    state (object): A játék kezdőállapotas
+}
+
+
+START GAME
+----------
+
+    CÉL: A játékmenet indítása
+
+    IRÁNY: gui --> gameserver
+
+    KÉRÉS:
+    {
+        "messageType" : "START_GAME",
+        "content" : {
+            "game" : 1,
+            "player1" : {
+                "type": "GUI"
+            },
+            "player2" : {
+                "type": "AI",
+                "gameTree": 4,
+                "level": 4
+            }
+        }
+    }
+
+    game (integer): a játék játéklogikájának azonosítója, a GET_GAME_LIST szolgáltatja
+    player1/player2 (object): a játékos felek specifikálása
+        kötelező elem: type (enumeration). GUI vagy AI, hogy adott játékos micsoda
+        elemek AI esetén:
+            gameTree (integer): a kiválasztott játékfa azonosítója.
+            level (integer): az AI nehézségének absztrakt megadása (1-5, ahol 5 a legnehezebb)
+            megjegyzés: lehet mindkét játékos GUI, vagy AI, etc.
+
+    VÁLASZ:
+    {
+        "messageType" : "START_GAME",
+        "content" : {
+            "result" : "OK",
+            "id" : 424,
+            "state" : {
+
+            }
+        }
+    }
+
+    result (enumeration): Sikeresség-indikátor, siker esetén OK
+    id (integer): A játékmenet egyedi azonosítója.
+    state (object): a kezdőállapot
+
+-- ! GameTree hogy tud possible move-okat lekérdezni?
+TURN
+----
+
+    CÉL: egy kör levezénylése. Egy körnek minősül egy lépés. Ami fontos: adott esetben a másik játékos lépéséről is kaphat információt a másik fél, a nélkül, hogy lépne.
+
+    IRÁNY: gameserver --> gui, gameserver --> gametree
+
+    KÉRÉS:
+    {
+        "messageType" : "TURN",
+        "content" : {
+            "gameId" : 23,
+            "state" : {
+                -- JÁTÉKFÜGGŐ
+            },
+            "next" : "PLAYER_1", 
+            "moves" : [
+                {}, {}, {}, {}
+            ]
+         }
+    }
+
+    gameId (integer): A játék azonosítója
+    state (object): Az aktuális állapot (pl az előző játékos lépése után)
+    next (enumeration): Opcionális (!). Ha nincs megadva, akkor csak egy állapotfrissítés, ha megvan adva, akkor annak a játékosnak a nevében vár lépést, aki itt szerepel
+    moves (list of object): Opcionális (!). Akkor kell, ha a next meg van adva, akkor annak a játékosnak a lépési lehetőségei
+    Megjegyzés 1: Erre az opcionális mechanizmusra azért van szükség, hogy az AI-AI esetén is lehessen üzenetet küldeni a GUI-nak.
+    Megjegyzés 2: Ha AI-hoz megy a kérés, ott kötelező a next és a moves, nem opcionális (Nem állapottartóak, frissítés nem kell)
+
+
+-- ! "step" helyett miért nem move?
+    VÁLASZ: {
+        "messageType" : "TURN",
+        "content" : {
+            "gameId" : 23,
+            "step" : {
+                -- JÁTÉKFÜGGŐ
+            }
+        }
+    }
+
+
+-- ! Következő játékos is kell a kérésben
+-- ! Játékállapotok is kellenek a válaszban
+GET POSSIBLE MOVES
+------------------
+
+    CÉL: Az adott állapotból elérhető lépések listája 
+
+    IRÁNY: gameserver --> gamelogic
+
+    KÉRÉS:
+    {
+        "messageType" : "POSSIBLE_MOVES",
+        "content" : {
+            "state" : {
+                -- JÁTÉKFÜGGŐ
+            }
+        }
+    }
+
+    state (object): Az aktuális játékállás
+
+    VÁLASZ:
+    {
+        "messageType" : "POSSIBLE_MOVES",
+        "content" : {
+            "moves" : [
+                {}, {}, {}, {}
+            ]
+        }
+    }
+
+    moves (list of objects): A lehetséges lépések listája, a listaelemek játékfüggőek ("step" objektumok)
+
+
+-- ! messageType-ban "POSSIBLE_MOVES" elírás (gondolom)
+GET NEXT STATE
+--------------
+
+    CÉL: Megadja, hogy adott állásból adott lépéssel mi a következő állás
+
+    IRÁNY: gameserver --> gamelogic
+
+    KÉRÉS:
+    {
+        "messageType" : "POSSIBLE_MOVES",
+        "content" : {
+            "state" : {
+                -- JÁTÉKFÜGGŐ
+            },
+            "move" : {
+                -- JÁTÉKFÜGGŐ
+            }
+        }
+    }
+
+    state (object): Az aktuális státusz
+    move (object): A megtett lépés
+
+    VÁLASZ:
+    {
+        "messageType" : "POSSIBLE_MOVES",
+        "content" : {
+            "state" : {
+                -- JÁTÉKFÜGGŐ
+            }
+        }
+    }
+
+    state (object): A következő, elérendő státusz. Fontos: A státusz tartalmazza azt az indikátort is, hogy "vége a játéknak"
+
+STOP GAME
+---------
+
+    CÉL: Játék megállítása GUI oldalról
+
+    KÉRÉS:
+    {
+        "messageType" : "STOP_GAME",
+        "content" : {
+            "id" : 424
+        }
+    }
+
+    id (integer): A leállítandó játék azonosítója
+
+    VÁLASZ:
+    {
+        "messageType" : "STOP_GAME",
+        "content" : {
+            "result" : "OK"
+        }
+    }
+
+    result (enumeration): Sikeresség-indikátor, siker esetén OK
+
+    IRÁNY: gui --> gameserver
+
+GAME IS FINISHED
+----------------
+
+    CÉL: A játék végének jelzése a kliens felé (a gameserver által visszaadott state alapján)
+
+    IRÁNY: gameserver --> gui
+
+    KÉRÉS:
+    {
+        "messageType" : "GAME_IS_FINISHED",
+        "content" : {
+            "id" : 424,
+            "result" : "PLAYER_1"
+        }
+    }
+
+    id (integer): A játék azonosítója
+    result (enumeration): Az eredmény, vagy nyertes, vagy egál. Értékek: PLAYER_1, PLAYER_2, DRAW
+
+    VÁLASZ:
+    {
+        "messageType" : "GAME_IS_FINISHED",
+        "content" : {
+            "result" : "OK",
+        }
+    }
+
+    result (enumeration): A GUI csak egy acknowledge-t küld vissza
