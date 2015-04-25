@@ -12,7 +12,7 @@ import Data.Aeson.Types
 import CBSD.Search
 
 data Result = Win Player | Draw | Continue deriving (Eq, Show)
-newtype Score = Score Int deriving (Eq, Show, Ord, Num)
+newtype Score = Score Int deriving (Eq, Show, Ord, Num, Integral, Enum, Real)
 
 instance Bounded Score where
   maxBound = Score (maxBound - 1)

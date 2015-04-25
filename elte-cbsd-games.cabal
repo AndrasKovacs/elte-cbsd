@@ -19,15 +19,13 @@ library
   default-language:    Haskell2010
 
   exposed-modules:     
-    CBSD.TicTacToe, 
-    CBSD.Agarak,
     CBSD.Potyogos,
     CBSD.Ataxx,
-    CBSD.Search
-  other-modules:
-    CBSD.CommTest,
+    CBSD.Search,
+    CBSD.HeuMain,
     CBSD.Common,
-    CBSD.MessageGen
+    CBSD.MessageGen,
+    CBSD.Messages
     
 
   build-depends:       

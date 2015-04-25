@@ -1,7 +1,12 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module CBSD.Messages where
+module CBSD.Messages (
+    Center_GL(..)
+  , Center_GT(..)
+  , GTH_State(..)
+  , GT_Heu(..)
+  , Wrap(..) ) where
 
 import Data.Aeson.TH
 import CBSD.Search
