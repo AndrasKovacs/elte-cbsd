@@ -21,7 +21,6 @@ import qualified Data.ByteString.Lazy as LB
 
 import CBSD.Messages
 
-
 getPortNum :: IO PortNumber
 getPortNum = getArgs >>= \case
   port:_ -> maybe
@@ -56,11 +55,11 @@ heuMain getPortNum heu = withSocketsDo $ do
       forever $ do        
         getMsg handle >>= \case          
           (GTH_REQ_CLOSE :: GT_Heu state) -> do
-            printf "Received CLOSE\n"
-            printf "Shutting down\n"
+            printf "heuMain: received CLOSE\n"
+            printf "heuMain: shutting down\n"
             exitSuccess            
           GTH_REQ_EVAL state@(GTH_State board player) -> do
-            printf "Received EVAL with state %s\n" (show state)
+--            printf "Received EVAL with state %s\n" (show state)
             let score = heu board
-            printf "Sending heuristic score %d\n" score
+--            printf "Sending heuristic score %d\n" score
             putMsg handle (GTH_RES_EVAL_RE score :: GT_Heu state)

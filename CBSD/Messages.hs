@@ -61,7 +61,7 @@ data Center_GT state move
 data GTH_State state
   = GTH_State {
     gth_board      :: state,
-    gth_nextPlayer :: Player }
+    gth_nextPlayer :: Player } -- Fölösleges a Player!
   deriving (Eq, Show)
 
 data GT_Heu state
