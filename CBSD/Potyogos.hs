@@ -1,24 +1,18 @@
-{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, OverloadedStrings #-}
+{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts #-}
 
 module CBSD.Potyogos where
 
+import CBSD.Search
+import CBSD.Common
+
 import Control.Monad
 import Control.Applicative
-import Data.Function
 import Data.List
-import Data.List.Split
 import Control.Lens
 import Data.Ix (inRange, range)
-import Data.Char
-import Data.Maybe
 import Data.Array (Array, (!), (//))
 import qualified Data.Array as A
 
-import Data.Aeson hiding (Result, Array)
-import Data.Aeson.Types hiding (Result, Array)
-
-import CBSD.Search
-import CBSD.Common
 
 type Ix     = (Int, Int)
 type Move   = Int
@@ -27,8 +21,8 @@ data Cell   = Empty | Filled Player deriving (Eq, Show)
 
     
 cols, rows :: Int
-cols    = 7
-rows    = 6
+cols = 7
+rows = 6
 
 ixRange :: (Ix, Ix)
 ixRange = ((1, 1), (rows, cols))
@@ -60,17 +54,6 @@ result s = case wins of
     runs   = group . map (s!) =<< allIxs
     wins   = [p | run@(Filled p:_) <- runs, length run == 4]
     ended  = all (/=Empty) $ A.elems s
-
-showTable :: GState -> String
-showTable s = unlines lines where
-  showCell = \case
-    Filled PMax -> 'x'
-    Filled PMin -> 'o'
-    _           -> ' '      
-  str   = map showCell $ A.elems s
-  lines = take cols ['A'..] : take cols (repeat '-') : chunksOf cols str
-     ++ [take cols (repeat '-'), take cols ['A'..]]
-
      
 --------------------------------------------------    
 
@@ -86,8 +69,7 @@ makeMove p s m = moveIndex s m <&> (\ix -> s // [(ix, Filled p)])
 moves :: Player -> GState -> [(GState, Move)]
 moves p s = case result s of
   Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (dropIndex s) colIxs]
-  _        -> []
-  
+  _        -> []  
 
 --------------------------------------------------  
 
@@ -114,51 +96,4 @@ smarterHeu s = foldM score 0 neighs ^. chosen where
       (4, _) -> Left $ adjustHeu p maxBound
       (g, e) -> Right $ acc + (if g + e >= 4 then adjustHeu p (Score g) else 0)
   score acc _ = Right acc
-
-
---------------------------------------------------
-
-instance ToJSON Cell where
-  toJSON (Filled p) = toJSON p
-  toJSON Empty      = Number 0
-
-instance FromJSON Cell where
-  parseJSON v =
-        (Filled <$> parseJSON v)
-    <|> (Empty  <$ withScientific "" (guard . (==0)) v)
-
---------------------------------------------------
-
-
-parseInp :: String -> Maybe Move
-parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
-parseInp _ = Nothing
-
-mkSearch = nextMove True ((pure.).moves) (pure.smarterHeu)
-easy   = mkSearch alphaBeta (1*10^6) 2
-medium = mkSearch alphaBeta (1*10^6) 4
-hard   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
-
-game :: (Player -> GState -> IO (Maybe Move)) -> GState -> IO ()
-game nextMove = fix $ \nextRound s -> do  
-  putStrLn $ showTable s
-
-  case result s of
-    Win PMax -> putStrLn "You won"
-    Win PMin -> putStrLn "You lost"
-    Draw     -> putStrLn "It's a draw"
-    Continue -> do
-      
-      s <- fix $ \tryMove -> do
-        m <- fix $ \tryInp -> maybe
-          (putStrLn "Invalid input" >> tryInp)
-          pure =<< parseInp <$> getLine
-        case moveIndex s m of
-          Just ix -> pure $ s // [(ix, Filled PMax)]
-          _       -> putStrLn "Full column" >> tryMove
-                
-      maybe
-        (nextRound s)
-        (nextRound . fromJust . makeMove PMin s)
-        =<< nextMove PMin s
 

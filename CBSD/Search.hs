@@ -14,10 +14,6 @@ module CBSD.Search (
   , minimax
   , alphaBeta
   , orderWith
-    
-  , negamax
-  , negaAlphaBeta
-  , negaOrderWith
   ) where
 
 import Control.Applicative
@@ -28,7 +24,6 @@ import Control.Monad.Except
 import Control.Monad.IO.Class
 import System.Timeout.Returning
 import Text.Printf
-
 import Data.Aeson
 
 type Depth = Int
@@ -144,68 +139,4 @@ alphaBeta moves heu = go minBound maxBound
       ms <- moves p s
       if null ms 
         then heu s <&> (,Nothing)
-        else either id fst <$> runExceptT (loop ms)
-
-
-
-{-
-  CAUTION : Only use nega searches if the all of the following holds:
-
-    1. negate minBound == maxBound
-    2. negate maxBound == minBound
-    3. (heuristic of a state with PMax) == negate (heuristic of state with PMin)
-
-  Example for violation: (negate minBound :: Int) /= maxBound
-  Use newtype wrappers when necessary to ensure the above conditions.
-
-  Also, don't mix nega and non-nega searches when informing search order!
--}
-
--- | Order search by a specified search algorithm at the given depth (nega only!)
-negaOrderWith ::
-     Num score
-  => Depth
-  -> Search m score state move
-  -> Search m score state move
-  -> Search m score state move
-negaOrderWith d ordAlg alg moves heu = alg ordMoves heu where
-  ordMoves p s =
-        moves p s
-    >>= each (\(s, m) -> (negate . fst <$> ordAlg moves heu d (switch p) s) <&> (,(s, m)))
-    <&> sortBy (flip $ comparing fst)
-    <&> map snd   
-
-negamax :: Num score => Search m score state move
-negamax moves heu = go
-  where    
-    go d p s | d <= 0 = (adjustHeu p <$> heu s) <&> (,Nothing)
-    go d p s = do
-      ms <- moves p s
-      if null ms then
-         (adjustHeu p <$> heu s) <&> (,Nothing)
-      else do
-         ms <- ms& each . _1 %%~ \st ->
-                 go (d - 1) (switch p) st <&> _1 %~ negate
-         let ((score, _) , move) = maximumBy (comparing (fst.fst)) ms
-         pure (score, Just move)
-
-negaAlphaBeta :: (Bounded score, Num score) => Search m score state move
-negaAlphaBeta moves heu = go minBound maxBound                           
-  where                           
-    go _    _     d p s | d <= 0 = (adjustHeu p <$> heu s) <&> (,Nothing)
-    go alpha beta d p s = do
-
-      let step (best@(bsc, _), alpha) (st, mv) = do
-            (negate -> sc, _) <- lift $ go (-beta) (-alpha) (d - 1) (switch p) st            
-            let best'@(bsc', _) = if sc > bsc then (sc, Just mv) else best
-                alpha' = max alpha bsc'                
-            if beta <= alpha'
-              then throwError best'
-              else pure (best', alpha')              
-            
-          loop = foldM step ((minBound, Nothing), alpha)
-                  
-      ms <- moves p s      
-      if null ms
-        then (adjustHeu p <$> heu s) <&> (,Nothing)      
         else either id fst <$> runExceptT (loop ms)

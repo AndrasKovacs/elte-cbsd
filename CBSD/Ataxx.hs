@@ -1,32 +1,22 @@
 
 {-# LANGUAGE
-  LambdaCase, GeneralizedNewtypeDeriving, TypeFamilies,
-  BangPatterns, TemplateHaskell, TupleSections, FlexibleContexts,
-  OverloadedStrings, MultiParamTypeClasses, MonadComprehensions #-}
+  LambdaCase, TemplateHaskell, TupleSections,
+  MultiParamTypeClasses, TypeFamilies #-}
 
 module CBSD.Ataxx where
 
+import CBSD.Search
+import CBSD.Common
+
 import Control.Applicative
-import Control.Lens hiding ((.=))
-import Control.Monad
 import Data.List
-import Data.List.Split
 import Data.Word
-import Data.Char
 import Data.Ix (range, inRange)
-import Data.Function
-import Data.Maybe
 
 import qualified Data.Vector.Unboxed as UV
 import qualified Data.Vector.Unboxed.Mutable as MUV
 import qualified Data.Vector as V
 import           Data.Vector.Unboxed.Deriving
-
-import Data.Aeson.Types hiding (Result)
-import Data.Aeson       hiding (Result)
-
-import CBSD.Search
-import CBSD.Common
 
 
 --------------------------------------------------
@@ -119,7 +109,6 @@ heu = UV.foldl' go 0 where
 
 --------------------------------------------------
 
-
 blocks :: [(Ix, Cell)]
 blocks = map (,Block) [ix2 2 2, ix2 2 4, ix2 4 2, ix2 4 4]
 
@@ -129,81 +118,3 @@ start = empty // (p1Start ++ p2Start ++ blocks) where
   p1Start = map (,Filled PMax) [ix2 0 0, ix2 (size - 1) (size - 1)]
   p2Start = map (,Filled PMin) [ix2 (size - 1) 0, ix2 0 (size - 1)]
 
-showCell :: Cell -> Char
-showCell = \case
-  Filled PMax -> 'X'
-  Filled PMin -> 'O'
-  Block       -> '#'
-  Empty       -> ' '
-  
-showTable :: GState -> String
-showTable s = unlines lines where
-  str   = map showCell $ UV.toList s
-  lines =
-    ("  " ++ take size ['A'..]) :
-    zipWith (\i l -> i:'|':l++['|',i]) ['1'..] (chunksOf size str)
-    ++ ["  " ++ take size ['A'..]]
-
-
--- Messages
---------------------------------------------------
-
-
-instance ToJSON Cell where
-  toJSON (Filled p) = toJSON p
-  toJSON _          = Number 0 -- We conflate Empty and Blocked!!!
-
-instance FromJSON Cell where
-  parseJSON v =
-        (Filled <$> parseJSON v)
-    <|> (Empty  <$ withScientific "" (guard . (==0)) v)
-
-
--- Test game
---------------------------------------------------    
-
-
-readInp :: Player -> GState -> String -> Maybe Move
-readInp p s (from1:from2:' ':to1:to2:[]) =
-  let f1 = ord from1 - ord 'A'
-      f2 = ord from2 - ord '1'
-      t1 = ord to1   - ord 'A'
-      t2 = ord to2   - ord '1'
-      move = (ix2 f2 f1, ix2 t2 t1)
-  in [move |
-      all (inRange (0, size - 1)) [f1, f2, t1, t2],
-      elem move (map snd $ moves p s)]
-readInp _ _ _ = Nothing     
-
-mkSearch = nextMove True ((pure.).moves) (pure.heu)
-
-easy     = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) 2
-medium   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) 3
-hard     = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound
-
-game :: (Player -> GState -> IO (Maybe Move)) -> GState -> IO ()
-game nextMove = fix $ \nextRound s -> do  
-  putStrLn $ showTable s
-
-  case result PMax s of
-    Win PMax -> putStrLn "You won"
-    Win PMin -> putStrLn "You lost"
-    Draw     -> putStrLn "It's a draw"
-    Continue -> do
-      
-     s <- fix $ \tryMove -> maybe
-            (putStrLn "Invalid move" >> tryMove)
-            (pure . fromJust . makeMove PMax s)
-            =<< readInp PMax s <$> getLine
-
-     putStrLn $ showTable s            
-          
-     case result PMin s of
-       Win PMax -> putStrLn "You won"
-       Win PMin -> putStrLn "You lost"
-       Draw     -> putStrLn "It's a draw"
-       Continue ->
-         nextRound . fromJust . makeMove PMin s
-         =<< fromJust <$> nextMove PMin s
-
-         
