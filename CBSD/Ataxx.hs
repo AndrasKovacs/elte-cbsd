@@ -56,7 +56,6 @@ ix2 i j = i * size + j
 playerCells :: Player -> GState -> Int
 playerCells p = length . filter (==Filled p) . UV.toList
 
-
 --------------------------------------------------
 
 -- | Single step neighborhoods
@@ -207,6 +206,4 @@ game nextMove = fix $ \nextRound s -> do
          nextRound . fromJust . makeMove PMin s
          =<< fromJust <$> nextMove PMin s
 
-
-
-
+         
