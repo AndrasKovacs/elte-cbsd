@@ -42,7 +42,7 @@ instance (ToJSON a) => ToJSON (StripEmptyContent a) where
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
-data GameType      = Ataxx | Foxes | DropAmoeba deriving (Eq, Show)
+data GameType      = Ataxx | Fox | Amoeba deriving (Eq, Show)
 data ConnectResult = OK | FAIL deriving (Eq, Show)
 
 $(deriveJSON defaultOptions ''TurnStatus)                      

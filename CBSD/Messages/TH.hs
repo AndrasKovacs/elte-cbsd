@@ -10,7 +10,7 @@ messageOptions :: Options
 messageOptions = defaultOptions { fieldLabelModifier = stripPrefix }
 
 messageTypeField :: String
-messageTypeField = "messageTypes"
+messageTypeField = "messageType"
 
 contentField :: String
 contentField = "content"

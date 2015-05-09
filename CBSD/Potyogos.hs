@@ -38,8 +38,8 @@ start = A.listArray ixRange $ repeat Empty
 ------------------------------------------------------------
 
 rowIxs, diagIxs, colIxs, allIxs :: [[Ix]]
-rowIxs  = [[(i, j) | j <- [1..cols]] | i <- [1..rows]]
-colIxs  = [[(i, j) | i <- [1..rows]] | j <- [1..cols]]
+rowIxs  = [[(i, j) | j <- [0..cols-1]] | i <- [0..rows-1]]
+colIxs  = [[(i, j) | i <- [0..rows-1]] | j <- [0..cols-1]]
 
 diagIxs = filter ((>=4).length) $ stripe colIxs ++ stripe (reverse colIxs)
   where
@@ -70,7 +70,7 @@ indexOfDrop :: GState -> [Ix] -> Maybe Ix
 indexOfDrop s = find ((==Empty) . (s!)) . reverse
 
 indexOfMove :: GState -> Move -> Maybe Ix
-indexOfMove s m = indexOfDrop s (range ((1, m), (rows, m)))
+indexOfMove s m = indexOfDrop s (range ((0, m), (rows-1, m)))
 
 makeMove :: Player -> GState -> Move -> Maybe GState
 makeMove p s m = indexOfMove s m <&> (\ix -> s // [(ix, Filled p)])
@@ -119,7 +119,7 @@ instance ToJSON MoveJSON where
 instance FromJSON MoveJSON where
   parseJSON = withObject "" $ \obj -> do
     col <- obj .: "column"
-    guard $ inRange (1, cols) col
+    guard $ inRange (0, cols-1) col
     pure $ MoveJSON col
 
 instance ToJSON Cell where
