@@ -3,7 +3,6 @@
 module CBSD.Potyogos where
 
 import CBSD.Search
-import CBSD.Common
 
 import Control.Monad
 import Control.Applicative
@@ -13,12 +12,16 @@ import Data.Ix (inRange, range)
 import Data.Array (Array, (!), (//))
 import qualified Data.Array as A
 
+-- Types
+------------------------------------------------------------
 
 type Ix     = (Int, Int)
 type Move   = Int
 type GState = Array Ix Cell
 data Cell   = Empty | Filled Player deriving (Eq, Show)
 
+-- Constants
+------------------------------------------------------------
     
 cols, rows :: Int
 cols = 7
@@ -29,6 +32,8 @@ ixRange = ((1, 1), (rows, cols))
 
 start :: GState
 start = A.listArray ixRange $ repeat Empty
+
+------------------------------------------------------------
 
 rowIxs, diagIxs, colIxs, allIxs :: [[Ix]]
 rowIxs  = [[(i, j) | j <- [1..cols]] | i <- [1..rows]]
@@ -46,6 +51,10 @@ diagIxs = filter ((>=4).length) $ stripe colIxs ++ stripe (reverse colIxs)
     
 allIxs = rowIxs ++ colIxs ++ diagIxs
        
+   
+-- Moves     
+------------------------------------------------------------
+
 result :: GState -> Result
 result s = case wins of
   p:_ -> Win p
@@ -54,24 +63,23 @@ result s = case wins of
     runs   = group . map (s!) =<< allIxs
     wins   = [p | run@(Filled p:_) <- runs, length run == 4]
     ended  = all (/=Empty) $ A.elems s
-     
---------------------------------------------------    
 
-dropIndex :: GState -> [Ix] -> Maybe Ix
-dropIndex s = find ((==Empty) . (s!)) . reverse
+indexOfDrop :: GState -> [Ix] -> Maybe Ix
+indexOfDrop s = find ((==Empty) . (s!)) . reverse
 
-moveIndex :: GState -> Move -> Maybe Ix
-moveIndex s m = dropIndex s (range ((1, m), (rows, m)))
+indexOfMove :: GState -> Move -> Maybe Ix
+indexOfMove s m = indexOfDrop s (range ((1, m), (rows, m)))
 
 makeMove :: Player -> GState -> Move -> Maybe GState
-makeMove p s m = moveIndex s m <&> (\ix -> s // [(ix, Filled p)])
+makeMove p s m = indexOfMove s m <&> (\ix -> s // [(ix, Filled p)])
 
 moves :: Player -> GState -> [(GState, Move)]
 moves p s = case result s of
-  Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (dropIndex s) colIxs]
+  Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (indexOfDrop s) colIxs]
   _        -> []  
 
---------------------------------------------------  
+-- Heuristics
+------------------------------------------------------------
 
 dumbHeu :: GState -> Score
 dumbHeu s = case result s of

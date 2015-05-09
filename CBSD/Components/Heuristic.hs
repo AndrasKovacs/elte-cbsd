@@ -8,12 +8,9 @@ import CBSD.Messages.Types
 import Network
 import Control.Exception
 import System.IO
-import System.Environment
 import Text.Printf
-import Text.Read
 import Control.Monad
 import System.Exit
-import Data.Word
 
 main ::
      Codec (TreeHeu state)

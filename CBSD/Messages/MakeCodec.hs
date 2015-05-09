@@ -1,5 +1,5 @@
 {-|
-Touching up the TH-generated parsers so that it conforms to the CBSD formats
+Touching up the TH-generated parsers so that they conforms to the CBSD formats
 -}
 {-# LANGUAGE LambdaCase #-}
 

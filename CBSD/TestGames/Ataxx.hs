@@ -6,7 +6,6 @@
 module CBSD.TestGames.Ataxx where
 
 import CBSD.Search
-import CBSD.Common
 import CBSD.Ataxx
 
 import qualified Data.Vector.Unboxed as UV

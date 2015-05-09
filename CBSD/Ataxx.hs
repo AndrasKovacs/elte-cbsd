@@ -1,12 +1,16 @@
 
 {-# LANGUAGE
+  ViewPatterns,
   LambdaCase, TemplateHaskell, TupleSections,
   MultiParamTypeClasses, TypeFamilies #-}
 
 module CBSD.Ataxx where
 
 import CBSD.Search
-import CBSD.Common
+import CBSD.Messages.SocketComm
+
+import Control.Lens
+import Data.Aeson hiding (Result)
 
 import Control.Applicative
 import Data.List
@@ -18,8 +22,13 @@ import qualified Data.Vector.Unboxed.Mutable as MUV
 import qualified Data.Vector as V
 import           Data.Vector.Unboxed.Deriving
 
+{-
+    NOTE: Block position is burnt into the "moves" function now!!
+    Also, We disallow blocks when converting to/from JSON!
+-}
 
---------------------------------------------------
+-- Types
+------------------------------------------------------------
 
 data Cell   = Filled Player | Empty | Block deriving (Eq, Show)
 type Ix     = Int
@@ -31,8 +40,25 @@ derivingUnbox "Cell"
   [| \case Empty -> 0; Filled PMax -> 1; Filled PMin -> 2; Block -> 3 |]
   [| \case 0 -> Empty; 1 -> Filled PMax; 2 -> Filled PMin; 3 -> Block |]
 
+-- Serialization
+------------------------------------------------------------
 
---------------------------------------------------
+instance FromJSON Cell where
+  parseJSON = withScientific "" $ \case
+    0 -> pure Empty
+    1 -> pure $ Filled PMax
+    2 -> pure $ Filled PMin
+    _ -> empty
+
+instance ToJSON Cell where
+  toJSON = \case
+    Empty       -> Number 0
+    Filled PMax -> Number 1
+    Filled PMin -> Number 2
+    Block       -> Number 0
+
+-- Constants + Helpers
+------------------------------------------------------------
 
 size    = 7
 vecSize = size * size
@@ -46,7 +72,9 @@ ix2 i j = i * size + j
 playerCells :: Player -> GState -> Int
 playerCells p = length . filter (==Filled p) . UV.toList
 
---------------------------------------------------
+
+-- Moves
+------------------------------------------------------------
 
 -- | Single step neighborhoods
 singleN :: V.Vector [Ix]
@@ -71,7 +99,7 @@ doubleN = do
 
 
 moves :: Player -> GState -> [(GState, Move)]
-moves p s = singleStep ++ doubleStep where
+moves p ((// blocks) -> s) = singleStep ++ doubleStep where
   
   ourUnits   = filter ((== Filled p) . (s UV.!)) $ range vRange
   convert to = filter ((== Filled (switch p)) . (s UV.!)) (singleN V.! to)
@@ -89,7 +117,9 @@ moves p s = singleStep ++ doubleStep where
 makeMove :: Player -> GState -> Move -> Maybe GState
 makeMove p s m = fst <$> (find ((==m).snd) $ moves p s)
 
---------------------------------------------------
+
+-- Heuristic
+------------------------------------------------------------
 
 result :: Player -> GState -> Result
 result p s = case moves p s of
@@ -99,15 +129,15 @@ result p s = case moves p s of
     EQ -> Draw
   _ -> Continue
 
---------------------------------------------------
-
 heu :: GState -> Score
 heu = UV.foldl' go 0 where
   go acc (Filled PMax) = acc + 1
   go acc (Filled PMin) = acc - 1
   go acc _             = acc
 
---------------------------------------------------
+
+-- Start state
+------------------------------------------------------------
 
 blocks :: [(Ix, Cell)]
 blocks = map (,Block) [ix2 2 2, ix2 2 4, ix2 4 2, ix2 4 4]

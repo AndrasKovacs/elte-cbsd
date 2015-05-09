@@ -1,15 +1,19 @@
 
-{-# LANGUAGE LambdaCase, TupleSections, ViewPatterns, RankNTypes, FlexibleContexts #-}
+{-# LANGUAGE
+  LambdaCase, TupleSections, ViewPatterns,
+  RankNTypes, FlexibleContexts, OverloadedStrings,
+  GeneralizedNewtypeDeriving
+  #-}
 
-module CBSD.Search (
-  
+module CBSD.Search (  
     Player(..)
+  , Score(..)
+  , CBSD.Search.Result(..)
   , Search
   , Timeout(..)
   , Depth
   , adjustHeu
-  , switch
-    
+  , switch    
   , nextMove    
   , minimax
   , alphaBeta
@@ -26,18 +30,34 @@ import System.Timeout.Returning
 import Text.Printf
 import Data.Aeson
 
-type Depth = Int
-data Player = PMax | PMin deriving (Eq, Show)
+
+-- Types
+------------------------------------------------------------
+
+data Result = Win Player | Draw | Continue
+  deriving (Eq, Show)
+           
+newtype Score = Score {_unScore :: Int}
+  deriving (Eq, Show, Ord, Num, Integral, Enum, Real)
+
+data Player = PMax | PMin
+  deriving (Eq, Show)           
+
+instance Bounded Score where
+  maxBound = Score (maxBound - 1)
+  minBound = Score (minBound + 2)  
 
 instance ToJSON Player where
-  toJSON = \case PMax -> Number 1; _ -> Number 2
+  toJSON PMax = String "PLAYER_1"
+  toJSON PMin = String "PLAYER_2"
 
 instance FromJSON Player where
-  parseJSON = withScientific "" $ \case
-    1 -> pure PMax
-    2 -> pure PMin
-    _ -> empty
+  parseJSON = withText "" $ \case
+    "PLAYER_1" -> pure PMax
+    "PLAYER_2" -> pure PMin
+    _          -> empty
 
+type Depth = Int    
                          
 type Search m score state move =
      (Ord score, Monad m)
@@ -47,6 +67,9 @@ type Search m score state move =
   -> Player                                 -- starting player
   -> state                                  -- starting state
   -> m (score, Maybe move)                  -- result score, chosen move
+
+
+------------------------------------------------------------  
 
 
 -- | Compute the next move given the parameters.
@@ -80,6 +103,10 @@ nextMove verbose moves heu alg timeout maxDepth p s = do
       (show $ fst <$> computedMove)
   
   pure ((snd <$> computedMove) <|> defaultMove)
+
+
+-- Algorithms
+------------------------------------------------------------  
   
 
 switch :: Player -> Player

@@ -1,11 +1,5 @@
 
-module CBSD.Messages.TH (
-    stripPrefix
-  , messageOptions
-  , taggingOptions
-  , messageTypeField
-  , contentField
-    ) where
+module CBSD.Messages.TH where
        
 import Data.Aeson.TH
 

@@ -1,10 +1,10 @@
-{-# LANGUAGE LambdaCase, FlexibleContexts, NoMonomorphismRestriction #-}
+{-# LANGUAGE
+  LambdaCase, FlexibleContexts, NoMonomorphismRestriction #-}
 
 module CBSD.TestGames.Potyogos where
 
 import CBSD.Potyogos
 import CBSD.Search
-import CBSD.Common
 
 import Data.Array ((//), (!), Array)
 import qualified Data.Array as A
@@ -70,7 +70,7 @@ game nextMove = fix $ \nextRound s -> do
         m <- fix $ \tryInp -> maybe
           (putStrLn "Invalid input" >> tryInp)
           pure =<< parseInp <$> getLine
-        case moveIndex s m of
+        case indexOfMove s m of
           Just ix -> pure $ s // [(ix, Filled PMax)]
           _       -> putStrLn "Full column" >> tryMove
                 

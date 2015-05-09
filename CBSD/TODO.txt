@@ -1,4 +1,0 @@
-
-
-Create newtype for game states, with appropriate JSON serialization
-Correct JSON for Player ("PLAYER_1" etc)

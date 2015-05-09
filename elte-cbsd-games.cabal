@@ -13,12 +13,9 @@ library
   default-language:    Haskell2010
 
   exposed-modules:     
-                       CBSD.Potyogos,
-                       
+                       CBSD.Potyogos,                       
                        CBSD.Ataxx,
                        CBSD.Search,
-                       CBSD.HeuMain,
-                       CBSD.Common,
                        
                        CBSD.Messages.TH,
                        CBSD.Messages.Types,
