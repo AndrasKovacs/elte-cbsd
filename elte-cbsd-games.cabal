@@ -20,7 +20,6 @@ library
                        CBSD.Messages.TH,
                        CBSD.Messages.Types,
                        CBSD.Messages.SocketComm,
-                       CBSD.Messages.MakeCodec,
                        
                        CBSD.TestGames.Ataxx,
                        CBSD.TestGames.Potyogos

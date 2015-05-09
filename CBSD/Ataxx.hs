@@ -1,17 +1,15 @@
 
 {-# LANGUAGE
-  ViewPatterns,
+  OverloadedStrings,
   LambdaCase, TemplateHaskell, TupleSections,
   MultiParamTypeClasses, TypeFamilies #-}
 
 module CBSD.Ataxx where
 
 import CBSD.Search
-import CBSD.Messages.SocketComm
 
-import Control.Lens
+import Control.Lens hiding ((.=))
 import Data.Aeson hiding (Result)
-
 import Control.Applicative
 import Data.List
 import Data.Word
@@ -23,7 +21,7 @@ import qualified Data.Vector as V
 import           Data.Vector.Unboxed.Deriving
 
 {-
-    NOTE: Block position is burnt into the "moves" function now!!
+    Position of blocks is hard-wired!!
     Also, We disallow blocks when converting to/from JSON!
 -}
 
@@ -38,24 +36,7 @@ type GState = UV.Vector Cell
 derivingUnbox "Cell"
   [t| Cell -> Word8 |]
   [| \case Empty -> 0; Filled PMax -> 1; Filled PMin -> 2; Block -> 3 |]
-  [| \case 0 -> Empty; 1 -> Filled PMax; 2 -> Filled PMin; 3 -> Block |]
-
--- Serialization
-------------------------------------------------------------
-
-instance FromJSON Cell where
-  parseJSON = withScientific "" $ \case
-    0 -> pure Empty
-    1 -> pure $ Filled PMax
-    2 -> pure $ Filled PMin
-    _ -> empty
-
-instance ToJSON Cell where
-  toJSON = \case
-    Empty       -> Number 0
-    Filled PMax -> Number 1
-    Filled PMin -> Number 2
-    Block       -> Number 0
+  [| \case 0 -> Empty; 1 -> Filled PMax; 2 -> Filled PMin; 3 -> Block |] 
 
 -- Constants + Helpers
 ------------------------------------------------------------
@@ -65,6 +46,7 @@ vecSize = size * size
 sRange  = (0, size - 1)
 vRange  = (0, vecSize - 1)
 ix2 i j = i * size + j
+unIx2 i = divMod i size
 
 (//) :: GState -> [(Int, Cell)] -> GState
 (//) v upd = UV.modify (\v -> mapM_ (uncurry $ MUV.write v) upd) v
@@ -99,7 +81,7 @@ doubleN = do
 
 
 moves :: Player -> GState -> [(GState, Move)]
-moves p ((// blocks) -> s) = singleStep ++ doubleStep where
+moves p s = singleStep ++ doubleStep where
   
   ourUnits   = filter ((== Filled p) . (s UV.!)) $ range vRange
   convert to = filter ((== Filled (switch p)) . (s UV.!)) (singleN V.! to)
@@ -148,3 +130,44 @@ start = empty // (p1Start ++ p2Start ++ blocks) where
   p1Start = map (,Filled PMax) [ix2 0 0, ix2 (size - 1) (size - 1)]
   p2Start = map (,Filled PMin) [ix2 (size - 1) 0, ix2 0 (size - 1)]
 
+-- Serialization
+------------------------------------------------------------
+
+instance FromJSON Cell where
+  parseJSON = withScientific "" $ \case
+    0 -> pure Empty
+    1 -> pure $ Filled PMax
+    2 -> pure $ Filled PMin
+    _ -> empty
+
+instance ToJSON Cell where
+  toJSON = \case
+    Empty       -> Number 0
+    Filled PMax -> Number 1
+    Filled PMin -> Number 2
+    Block       -> Number 0
+
+newtype MoveJSON = MoveJSON Move deriving (Eq, Show)
+
+instance ToJSON MoveJSON where
+  toJSON (MoveJSON (from, to)) = object
+    ["from" .= object ["y" .= y1, "x" .= x1],
+     "to"   .= object ["y" .= y2, "x" .= x2]]
+    where (y1, x1) = unIx2 from
+          (y2, x2) = unIx2 to
+
+instance FromJSON MoveJSON where
+  parseJSON = withObject "" $ \obj -> do
+    from <- obj .: "from"
+    to   <- obj .: "to"
+    MoveJSON <$> ((,)
+      <$> (ix2 <$> (from .: "y") <*> (from .: "x"))
+      <*> (ix2 <$> (to   .: "y") <*> (to   .: "x")))
+        
+newtype GStateJSON = GStateJSON GState deriving (Eq, Show)
+
+instance ToJSON GStateJSON where
+  toJSON (GStateJSON v) = toJSON $ UV.map (\case Block -> Empty; x -> x) v
+
+instance FromJSON GStateJSON where
+  parseJSON val = GStateJSON . (//blocks) <$> parseJSON val

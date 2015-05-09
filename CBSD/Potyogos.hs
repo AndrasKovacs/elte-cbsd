@@ -1,15 +1,16 @@
-{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts #-}
+{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, OverloadedStrings #-}
 
 module CBSD.Potyogos where
 
 import CBSD.Search
 
-import Control.Monad
 import Control.Applicative
-import Data.List
-import Control.Lens
-import Data.Ix (inRange, range)
+import Control.Lens hiding ((.=))
+import Control.Monad
+import Data.Aeson hiding (Array, Result)
 import Data.Array (Array, (!), (//))
+import Data.Ix (inRange, range)
+import Data.List
 import qualified Data.Array as A
 
 -- Types
@@ -19,6 +20,7 @@ type Ix     = (Int, Int)
 type Move   = Int
 type GState = Array Ix Cell
 data Cell   = Empty | Filled Player deriving (Eq, Show)
+
 
 -- Constants
 ------------------------------------------------------------
@@ -105,3 +107,31 @@ smarterHeu s = foldM score 0 neighs ^. chosen where
       (g, e) -> Right $ acc + (if g + e >= 4 then adjustHeu p (Score g) else 0)
   score acc _ = Right acc
 
+
+-- Serialization
+------------------------------------------------------------
+
+newtype MoveJSON = MoveJSON Move deriving (Eq, Show)
+
+instance ToJSON MoveJSON where
+  toJSON (MoveJSON move) = object ["column" .= move]
+
+instance FromJSON MoveJSON where
+  parseJSON = withObject "" $ \obj -> do
+    col <- obj .: "column"
+    guard $ inRange (1, cols) col
+    pure $ MoveJSON col
+
+instance ToJSON Cell where
+  toJSON Empty         = Number 0
+  toJSON (Filled PMax) = Number 1
+  toJSON (Filled PMin) = Number 2
+
+instance FromJSON Cell where
+  parseJSON = withScientific "" $ \case
+    0 -> pure Empty
+    1 -> pure $ Filled PMax
+    2 -> pure $ Filled PMin
+    _ -> empty
+  
+  

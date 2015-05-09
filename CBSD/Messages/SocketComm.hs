@@ -8,6 +8,7 @@ import Control.Exception
 import Data.Function
 import Data.Aeson
 import Text.Printf
+import Data.Coerce
 
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString as B

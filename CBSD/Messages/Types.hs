@@ -1,10 +1,14 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, LambdaCase #-}
 
 module CBSD.Messages.Types where
 
-import CBSD.Search
 import CBSD.Messages.TH
+import CBSD.Search
+import Control.Lens
+import Data.Aeson
+import Data.Aeson.Lens
 import Data.Aeson.TH
+import qualified Data.Text as T
 
 {-
 GameType, ConnectResult egységesítés?
@@ -12,6 +16,24 @@ TreeHeu egységesítés?
 Általános hibaüzenet.
 Opcionális mezők: nuill érték vagy kihagyás?
 -}
+
+------------------------------------------------------------
+
+newtype StripEmptyContent a = SEC a
+
+stripEmptyContent :: Value -> Value
+stripEmptyContent = _Object . at (T.pack contentField) %~ \case
+  Just (Array arr) | null arr -> Nothing
+  other -> other
+
+instance (FromJSON a) => FromJSON (StripEmptyContent a) where
+  parseJSON val = SEC <$> parseJSON (stripEmptyContent val)
+
+instance (ToJSON a) => ToJSON (StripEmptyContent a) where
+  toJSON (SEC a) = stripEmptyContent $ toJSON a
+
+------------------------------------------------------------  
+  
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
