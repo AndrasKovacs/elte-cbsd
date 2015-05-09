@@ -21,6 +21,9 @@ library
                        CBSD.Messages.Types,
                        CBSD.Messages.SocketComm,
                        
+                       CBSD.Components.Heuristic,
+                       CBSD.Compoments.Tree,
+                       
                        CBSD.TestGames.Ataxx,
                        CBSD.TestGames.Potyogos
 

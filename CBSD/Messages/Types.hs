@@ -13,8 +13,11 @@ import qualified Data.Text as T
 {-
 GameType, ConnectResult egységesítés?
 TreeHeu egységesítés?
+
 Általános hibaüzenet.
 Opcionális mezők: nuill érték vagy kihagyás?
+
+Potyogós: column 0-tól vagy 1-től kezdve számozva?
 -}
 
 ------------------------------------------------------------
@@ -77,7 +80,7 @@ $(deriveJSON messageOptions ''ReqTurn)
 
 data ResTurn move = ResTurn {
   rest_gameId :: Int,
-  rest_step   :: [move]
+  rest_step   :: move
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ResTurn)
 
@@ -91,24 +94,24 @@ data ResPossibleMoves move = ResPossibleMoves {
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ResPossibleMoves)
 
-data TreeCenter
+data TreeCenter state move
   = ReqTC_CONNECT ReqConnect
   | ResTC_CONNECT ResConnect
+  | ReqTC_POSSIBLE_MOVES (ReqPossibleMoves state)    
+  | ResTC_POSSIBLE_MOVES (ResPossibleMoves move)       
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''TreeCenter)           
   
 data CenterTree state move
   = ReqCT_TURN (ReqTurn state move)
   | ResCT_TURN (ResTurn move)
-  | ReqCT_POSSIBLE_MOVES (ReqPossibleMoves state)    
-  | ResCT_POSSIBLE_MOVES (ResPossibleMoves move)    
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterTree)
 
 data TreeHeu state
   = ReqTH_CLOSE    
   | ReqTH_EVAL {
-    theu_state :: StateRec state }
+    theu_state :: state }
   | ResTH_EVAL_RE {
     theu_stateValue :: Int }
   deriving (Eq, Show)
