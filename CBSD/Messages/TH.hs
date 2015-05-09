@@ -3,6 +3,8 @@ module CBSD.Messages.TH (
     stripPrefix
   , messageOptions
   , taggingOptions
+  , messageTypeField
+  , contentField
     ) where
        
 import Data.Aeson.TH
@@ -12,6 +14,12 @@ stripPrefix = drop 1 . dropWhile (/='_')
 
 messageOptions :: Options
 messageOptions = defaultOptions { fieldLabelModifier = stripPrefix }
+
+messageTypeField :: String
+messageTypeField = "messageTypes"
+
+contentField :: String
+contentField = "content"
   
 taggingOptions :: Options
 taggingOptions =
@@ -19,7 +27,7 @@ taggingOptions =
     fieldLabelModifier     = stripPrefix,
     constructorTagModifier = stripPrefix,
     sumEncoding            = defaultTaggedObject {
-      tagFieldName      = "messageType",
-      contentsFieldName = "content"
+      tagFieldName      = messageTypeField,
+      contentsFieldName = contentField
       }
     }

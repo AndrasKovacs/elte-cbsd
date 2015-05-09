@@ -13,7 +13,6 @@ TreeHeu egységesítés?
 Opcionális mezők: nuill érték vagy kihagyás?
 -}
 
-
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
 data GameType      = Ataxx | Foxes | DropAmoeba deriving (Eq, Show)

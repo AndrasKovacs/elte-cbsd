@@ -23,6 +23,7 @@ library
                        CBSD.Messages.TH,
                        CBSD.Messages.Types,
                        CBSD.Messages.SocketComm,
+                       CBSD.Messages.MakeCodec,
                        
                        CBSD.TestGames.Ataxx,
                        CBSD.TestGames.Potyogos
@@ -40,6 +41,7 @@ library
                        , mtl >=2.2 && <2.3
                        , network
                        , split >=0.2 && <0.3
+                       , text >= 1.2
                        , timeout-with-results >=0.2 && <0.3
                        , transformers >=0.4 && <0.5
                        , unordered-containers >= 0.2.5
