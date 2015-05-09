@@ -22,7 +22,7 @@ library
                        CBSD.Messages.SocketComm,
                        
                        CBSD.Components.Heuristic,
-                       CBSD.Compoments.Tree,
+                       CBSD.Components.Tree,
                        
                        CBSD.TestGames.Ataxx,
                        CBSD.TestGames.Potyogos

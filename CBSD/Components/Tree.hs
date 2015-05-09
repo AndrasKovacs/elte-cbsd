@@ -1,6 +1,6 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, RankNTypes, ScopedTypeVariables, FlexibleContexts #-}
 
-module CBSD.Components.Heuristic where
+module CBSD.Components.Tree where
 
 import CBSD.Messages.SocketComm
 import CBSD.Messages.Types
