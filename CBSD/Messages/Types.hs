@@ -14,10 +14,13 @@ import qualified Data.Text as T
 GameType, ConnectResult egységesítés?
 TreeHeu egységesítés?
 
-Általános hibaüzenet.
-Opcionális mezők: nuill érték vagy kihagyás?
+Általános hibaüzenet?
+Opcionális mezők: null érték vagy kihagyás?
 
 Potyogós: column 0-tól vagy 1-től kezdve számozva?
+
+GET_START_STATE: Hol határozzuk meg, hogy melyik player kezd?
+  -> jelenleg: GAMELOGIC-ba égettem, hogy PLAYER_1 kezd.
 -}
 
 ------------------------------------------------------------
@@ -35,8 +38,7 @@ instance (FromJSON a) => FromJSON (StripEmptyContent a) where
 instance (ToJSON a) => ToJSON (StripEmptyContent a) where
   toJSON (SEC a) = stripEmptyContent $ toJSON a
 
-------------------------------------------------------------  
-  
+------------------------------------------------------------    
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
@@ -93,41 +95,46 @@ data ResPossibleMoves move = ResPossibleMoves {
   resmoves_moves :: [move]
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ResPossibleMoves)
-
-data TreeCenter state move
-  = ReqTC_CONNECT ReqConnect
-  | ResTC_CONNECT ResConnect
-  | ReqTC_POSSIBLE_MOVES (ReqPossibleMoves state)    
-  | ResTC_POSSIBLE_MOVES (ResPossibleMoves move)       
-  deriving (Eq, Show)
-$(deriveJSON taggingOptions ''TreeCenter)           
   
 data CenterTree state move
-  = ReqCT_TURN (ReqTurn state move)
-  | ResCT_TURN (ResTurn move)
+  = Req_TURN (ReqTurn state move)
+  | Res_TURN (ResTurn move)
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterTree)
 
 data TreeHeu state
-  = ReqTH_CLOSE    
-  | ReqTH_EVAL {
+  = Req_CLOSE    
+  | Req_EVAL {
     theu_state :: state }
-  | ResTH_EVAL_RE {
+  | Res_EVAL_RE {
     theu_stateValue :: Int }
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''TreeHeu)
 
+data ReqEvaluateMove state move = ReqEvaluateMove {
+  reqEval_state :: StateRec state,
+  reqEval_move  :: move
+  } deriving (Eq, Show)
+$(deriveJSON messageOptions ''ReqEvaluateMove)
+
+data ResEvaluateMove state = ResEvaluateMove {
+  resEval_state :: StateRec state
+  } deriving (Eq, Show)
+$(deriveJSON messageOptions ''ResEvaluateMove)             
+
 data CenterLogic state move
-  = ReqCL_POSSIBLE_MOVES (ReqPossibleMoves state)
-  | ResCL_POSSIBLE_MOVES (ResPossibleMoves move)
-  | ReqCL_GET_START_STATE
-  | ResCL_GET_START_STATE (StateRec state)
+  = Req_POSSIBLE_MOVES  (ReqPossibleMoves state)
+  | Res_POSSIBLE_MOVES  (ResPossibleMoves move)
+  | Req_EVALUATE_MOVE   (ReqEvaluateMove state move)
+  | Res_EVALUATE_MOVE   (ResEvaluateMove state)
+  | Req_GET_START_STATE 
+  | Res_GET_START_STATE (StateRec state)
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterLogic)
 
-data LogicCenter
-  = ReqLC_CONNECT ReqConnect
-  | ResLC_CONNECT ResConnect
+data Connect
+  = Req_CONNECT ReqConnect
+  | Res_CONNECT ResConnect
   deriving (Eq, Show)
-$(deriveJSON taggingOptions ''LogicCenter)
+$(deriveJSON taggingOptions ''Connect)           
 

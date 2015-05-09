@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-module CBSD.Components.GetPortArg where
+module CBSD.Utils.GetPortArg where
 
 import Network
 import Data.Word

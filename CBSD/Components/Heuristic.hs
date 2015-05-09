@@ -23,11 +23,11 @@ main getPort heu = withSocketsDo $ do
   handle <- connectTo "localhost" (PortNumber portNum)  
   hSetBuffering handle LineBuffering
   forever $ respond handle $ \case
-     SEC ReqTH_CLOSE -> do
+     SEC Req_CLOSE -> do
        printf "received CLOSE message from game tree\n"
        printf "closing now\n"
        exitSuccess
-     SEC (ReqTH_EVAL (StateRec _ _ board _)) ->
-       pure $ Just $ SEC $ ResTH_EVAL_RE (heu board)
+     SEC (Req_EVAL (StateRec _ _ board _)) ->
+       pure $ Just $ SEC $ Res_EVAL_RE (heu board)
      _ -> pure Nothing          
             
