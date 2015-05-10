@@ -22,27 +22,32 @@ listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
   catch ((port,) <$> listenOn (PortNumber port))
         (\(_ :: IOException) -> go (port + 1))
 
+
+-- Comm primitives (Note the StripEmptyContent wrapping!)
+------------------------------------------------------------  
+
 -- | If the message isn't valid, try reading again
 getMessage :: FromJSON a => Handle -> IO a
 getMessage handle = do
   line <- B.hGetLine handle
   maybe
     (error $ printf "received invalid message: %s\n" (show line))
-    pure
+    (pure . unStripEmptyContent)
     (decodeStrict line)
 
 putMessage :: ToJSON a => Handle -> a -> IO ()
-putMessage handle = CB.hPutStrLn handle . LB.toStrict . encode
+putMessage handle = CB.hPutStrLn handle . LB.toStrict . encode . StripEmptyContent
   
 -- | Send request, then get response
-request :: (FromJSON a, ToJSON a) => Handle -> a -> IO a
+request :: (ToJSON a, FromJSON b) => Handle -> a -> IO b
 request handle a = do
   putMessage handle a
   getMessage handle
 
 -- | Get request, make response and send it
 --   If the request isn't valid, try reading again
-respond :: (FromJSON a, ToJSON a) => Handle -> (a -> IO (Maybe a)) -> IO ()
+respond ::
+  (FromJSON a, ToJSON a, ToJSON b) => Handle -> (a -> IO (Maybe b)) -> IO ()
 respond handle makeResponse = do
   req <- getMessage handle
   maybe
@@ -81,13 +86,13 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   (centerInPort, centerInSock) <- listenOnUnusedPort
   printf "listening for center on port %s\n" (show centerInPort)
   
-  putMessage hCenterOut (SEC (Req_CONNECT $
-    ReqConnect gameTypes name componentType (fromIntegral centerInPort)))
+  putMessage hCenterOut (Req_CONNECT $
+    ReqConnect gameTypes name componentType (fromIntegral centerInPort))
   printf "CONNECT request sent to center\n"      
 
   resConnect <- getMessage hCenterOut
   case resConnect of
-    SEC (Res_CONNECT (ResConnect res _)) -> case res of
+    Res_CONNECT (ResConnect res _) -> case res of
       OK   -> pure ()
       FAIL -> error "received FAILURE code in CONNECT response from center\n"
     other -> error $ printf "expected CONNECT response, got %s\n" (show $ encode other)

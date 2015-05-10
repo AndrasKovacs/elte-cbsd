@@ -36,20 +36,15 @@ main getCenterOutPort moves startState makeMove name gameType = withSocketsDo $ 
     
   forever $ respond hCenterIn $ \case
     
-    SEC (Req_GET_START_STATE :: CenterLogic state move) ->
-      pure $ Just $ SEC $ Res_GET_START_STATE $
-        StateRec 0 ONGOING startState PMax
+    (CL_GET_START_STATE :: CenterLogic state move) ->
+      pure $ Just $ LC_GET_START_STATE $
+        State 0 ONGOING startState PMax
 
-    SEC (Req_EVALUATE_MOVE (ReqEvaluateMove strec move)) -> do
-      let StateRec id status state player = strec
-      pure $ Just $ SEC $ Res_EVALUATE_MOVE $ ResEvaluateMove $
-        StateRec id status (makeMove player state move) (switch player)
+    CL_EVALUATE_MOVE (ReqEvaluateMove strec move) -> do
+      let State id status state player = strec
+      pure $ Just $ LC_EVALUATE_MOVE $ ResEvaluateMove $
+        State id status (makeMove player state move) (switch player)
 
-    SEC (Req_POSSIBLE_MOVES (ReqPossibleMoves (StateRec _ _ state player))) -> do
-      pure $ Just $ SEC $ Res_POSSIBLE_MOVES $ ResPossibleMoves (moves player state)
-
-    other -> error $
-      printf (
-        "expected EVALUATE_MOVE, GET_START_STATE or POSSIBLE_MOVES request, "
-        ++ "but received %s\n") (show $ encode other)
+    CL_POSSIBLE_MOVES (ReqPossibleMoves (State _ _ state player)) -> do
+      pure $ Just $ LC_POSSIBLE_MOVES $ ResPossibleMoves (moves player state)
 

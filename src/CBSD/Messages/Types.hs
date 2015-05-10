@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase #-}
 
 module CBSD.Messages.Types where
-
 import CBSD.Messages.TH
 import CBSD.Search
 import Control.Lens
@@ -10,22 +9,9 @@ import Data.Aeson.Lens
 import Data.Aeson.TH
 import qualified Data.Text as T
 
-{-
-GameType, ConnectResult egységesítés?
-TreeHeu egységesítés?
-
-Általános hibaüzenet?
-Opcionális mezők: null érték vagy kihagyás?
-
-Potyogós: column 0-tól vagy 1-től kezdve számozva?
-
-GET_START_STATE: Hol határozzuk meg, hogy melyik player kezd?
-  -> jelenleg: GAMELOGIC-ba égettem, hogy PLAYER_1 kezd.
--}
-
 ------------------------------------------------------------
 
-newtype StripEmptyContent a = SEC a
+newtype StripEmptyContent a = StripEmptyContent {unStripEmptyContent :: a}
 
 stripEmptyContent :: Value -> Value
 stripEmptyContent = _Object . at (T.pack contentField) %~ \case
@@ -33,10 +19,10 @@ stripEmptyContent = _Object . at (T.pack contentField) %~ \case
   other -> other
 
 instance (FromJSON a) => FromJSON (StripEmptyContent a) where
-  parseJSON val = SEC <$> parseJSON (stripEmptyContent val)
+  parseJSON val = StripEmptyContent <$> parseJSON (stripEmptyContent val)
 
 instance (ToJSON a) => ToJSON (StripEmptyContent a) where
-  toJSON (SEC a) = stripEmptyContent $ toJSON a
+  toJSON (StripEmptyContent a) = stripEmptyContent $ toJSON a
 
 ------------------------------------------------------------    
 
@@ -48,7 +34,7 @@ data ConnectResult = OK | FAIL deriving (Eq, Show)
 $(deriveJSON defaultOptions ''TurnStatus)                      
 $(deriveJSON defaultOptions ''ComponentType)           
 $(deriveJSON defaultOptions ''GameType)           
-$(deriveJSON defaultOptions ''ConnectResult)
+$(deriveJSON defaultOptions ''ConnectResult)  
 
 data ReqConnect = ReqConnect {
   reqc_games :: [GameType],
@@ -62,19 +48,31 @@ data ResConnect = ResConnect {
   resc_result :: ConnectResult,
   resc_id     :: Int
   } deriving (Eq, Show)
-$(deriveJSON messageOptions ''ResConnect)             
+$(deriveJSON messageOptions ''ResConnect)
 
-data StateRec state = StateRec {
+data Res_Connect
+  = Res_CONNECT ResConnect
+  | Res_CONNECT_DUMMY   -- HACK!!!!!!!!!!
+  deriving (Eq, Show)
+$(deriveJSON taggingOptions ''Res_Connect)
+
+data Req_Connect
+  = Req_CONNECT ReqConnect
+  | Req_CONNECT_DUMMY   -- HACK!!!!!!!!!!
+  deriving (Eq, Show)
+$(deriveJSON taggingOptions ''Req_Connect)                      
+
+data State state = State {
   st_id         :: Int,
   st_status     :: TurnStatus,
   st_board      :: state,
   st_nextPlayer :: Player
   } deriving (Eq, Show)
-$(deriveJSON messageOptions ''StateRec)
+$(deriveJSON messageOptions ''State)
 
 data ReqTurn state move = ReqTurn {
   reqt_gameId :: Int,
-  reqt_state  :: StateRec state,
+  reqt_state  :: State state,
   reqt_next   :: Maybe Player,
   reqt_moves  :: Maybe [move]
   } deriving (Eq, Show)
@@ -87,7 +85,7 @@ data ResTurn move = ResTurn {
 $(deriveJSON messageOptions ''ResTurn)
 
 data ReqPossibleMoves state = ReqPossibleMoves {
-  reqmoves_state :: StateRec state
+  reqmoves_state :: State state
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ReqPossibleMoves)             
 
@@ -95,46 +93,59 @@ data ResPossibleMoves move = ResPossibleMoves {
   resmoves_moves :: [move]
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ResPossibleMoves)
-  
+
 data CenterTree state move
-  = Req_TURN (ReqTurn state move)
-  | Res_TURN (ResTurn move)
+  = CT_TURN (ReqTurn state move)
+  | CT_POSSIBLE_MOVES (ResPossibleMoves move)
+  | CT_DUMMY             -- HACK!!!!!!!!!!
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterTree)
 
+data TreeCenter state move
+  = TC_TURN (ResTurn move)
+  | TC_POSSIBLE_MOVES (ReqPossibleMoves state)    
+  | TC_DUMMY             -- HACK!!!!!!!!!!    
+  deriving (Eq, Show)
+$(deriveJSON taggingOptions ''TreeCenter)
+
 data TreeHeu state
-  = Req_CLOSE    
-  | Req_EVAL {
+  = TH_CLOSE    
+  | TH_EVAL {
     theu_state :: state }
-  | Res_EVAL_RE {
-    theu_stateValue :: Int }
+  | TH_EVAL_RE {
+    theu_stateValue :: Int}
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''TreeHeu)
 
+data HeuTree
+  = HT_EVAL_RE {
+    heut_stateValue :: Int}
+  | HT_DUMMY             -- HACK!!!!!!!!!!
+  deriving (Eq, Show)
+$(deriveJSON taggingOptions ''HeuTree)           
+
 data ReqEvaluateMove state move = ReqEvaluateMove {
-  reqEval_state :: StateRec state,
+  reqEval_state :: State state,
   reqEval_move  :: move
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ReqEvaluateMove)
 
 data ResEvaluateMove state = ResEvaluateMove {
-  resEval_state :: StateRec state
+  resEval_state :: State state
   } deriving (Eq, Show)
-$(deriveJSON messageOptions ''ResEvaluateMove)             
+$(deriveJSON messageOptions ''ResEvaluateMove)
 
 data CenterLogic state move
-  = Req_POSSIBLE_MOVES  (ReqPossibleMoves state)
-  | Res_POSSIBLE_MOVES  (ResPossibleMoves move)
-  | Req_EVALUATE_MOVE   (ReqEvaluateMove state move)
-  | Res_EVALUATE_MOVE   (ResEvaluateMove state)
-  | Req_GET_START_STATE 
-  | Res_GET_START_STATE (StateRec state)
+  = CL_POSSIBLE_MOVES  (ReqPossibleMoves state)
+  | CL_EVALUATE_MOVE   (ReqEvaluateMove state move)
+  | CL_GET_START_STATE
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterLogic)
 
-data Connect
-  = Res_CONNECT ResConnect  
-  | Req_CONNECT ReqConnect
+data LogicCenter state move
+  = LC_POSSIBLE_MOVES  (ResPossibleMoves move)
+  | LC_EVALUATE_MOVE   (ResEvaluateMove state)
+  | LC_GET_START_STATE (State state)
   deriving (Eq, Show)
-$(deriveJSON taggingOptions ''Connect)           
+$(deriveJSON taggingOptions ''LogicCenter)
 

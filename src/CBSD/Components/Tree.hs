@@ -54,8 +54,8 @@ main getCenterOutPort startHeu
   let
     heu :: state -> IO Score
     heu state = do
-      request hHeu (SEC $ Req_EVAL state) >>= \case
-        SEC (Res_EVAL_RE score) -> pure $ Score score
+      request hHeu (TH_EVAL state) >>= \case
+        HT_EVAL_RE score -> pure $ Score score
         other -> 
           error $
             printf "expected EVAL_RE message, got %s\n"
@@ -63,10 +63,10 @@ main getCenterOutPort startHeu
 
     moves :: Player -> state -> IO [(state, move)]
     moves player state = do
-      res <- request hCenterOut $ SEC $ Req_POSSIBLE_MOVES $
-               ReqPossibleMoves $ StateRec 0 ONGOING state player
+      res <- request hCenterOut $ (TC_POSSIBLE_MOVES $
+               ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
       case res of
-        SEC (Res_POSSIBLE_MOVES (ResPossibleMoves moves)) -> do
+        (CT_POSSIBLE_MOVES (ResPossibleMoves moves) :: CenterTree state move) -> do
           pure $ map (\m -> (makeMove player state m, m)) moves
         other ->
           error $
@@ -77,10 +77,8 @@ main getCenterOutPort startHeu
     search = nextMove True moves heu searchAlg timeout maxBound    
 
   -- Main loop
-  forever $ respond hCenterIn $ \case
-    SEC (
-      Req_TURN (
-          ReqTurn gameId (StateRec _ _ state player) _ _)) -> do
+  forever $ respond hCenterIn $ \case    
+    (CT_TURN (ReqTurn gameId (State _ _ state player) _ _) :: CenterTree state move) -> do
       Just move <- search player state
-      pure $ Just $ SEC $ Res_TURN $ ResTurn gameId move
+      pure $ Just $ (TC_TURN $ ResTurn gameId move :: TreeCenter state move)
       

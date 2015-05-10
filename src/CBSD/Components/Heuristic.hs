@@ -36,11 +36,11 @@ main getPort heu = withSocketsDo $ do
   hSetBuffering handle LineBuffering
   
   forever $ respond handle $ \case
-     SEC Req_CLOSE -> do
+     TH_CLOSE -> do
        printf "received CLOSE message from game tree\n"
        printf "closing now\n"
        exitSuccess
-     SEC (Req_EVAL (StateRec _ _ board _)) ->
-       pure $ Just $ SEC $ Res_EVAL_RE (heu board)
+     TH_EVAL (State _ _ board _) ->
+       pure $ Just $ HT_EVAL_RE (heu board)
      _ -> pure Nothing          
             
