@@ -98,8 +98,8 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   resConnect <- getMessage hCenterOut
   case resConnect of
     Res_CONNECT (ResConnect res _) -> case res of
-      OK   -> pure ()
-      FAIL -> error "received FAILURE code in CONNECT response from center\n"
+      OK      -> pure ()
+      FAILURE -> error "received FAILURE code in CONNECT response from center\n"
     other -> error $ printf "expected CONNECT response, got %s\n" (show $ encode other)
   printf "CONNECT response OK\n"
                                  
