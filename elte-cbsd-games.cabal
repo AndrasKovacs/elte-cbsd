@@ -24,8 +24,8 @@ library
                        CBSD.Components.Heuristic,
                        CBSD.Components.Tree,
                        
-                       CBSD.TestGames.Ataxx,
-                       CBSD.TestGames.Potyogos
+                       CBSD.Tests.Games.Ataxx,
+                       CBSD.Tests.Games.Potyogos
 
   other-extensions: 
     TemplateHaskell

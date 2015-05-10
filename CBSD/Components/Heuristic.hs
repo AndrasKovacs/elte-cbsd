@@ -8,6 +8,8 @@ import CBSD.Messages.Types
 import Data.Aeson
 import Network
 import Control.Exception hiding (Handler)
+import Control.Concurrent
+import Data.Function
 import System.IO
 import Text.Printf
 import Control.Monad
@@ -18,10 +20,21 @@ main ::
   => IO PortNumber
   -> (state -> Int)
   -> IO ()
-main getPort heu = withSocketsDo $ do  
-  portNum <- getPort  
-  handle <- connectTo "localhost" (PortNumber portNum)  
+main getPort heu = withSocketsDo $ do
+  hSetBuffering stdout LineBuffering
+  printf "acquiring game tree port number\n"
+  port <- getPort
+  printf "acquired port %s\n" (show port)
+  
+  handle <- fix $ \again -> do
+    printf "trying to connect to game tree at port %s\n" (show port)
+    catch (connectTo "localhost" (PortNumber port))
+      (\(_ :: IOException) -> do
+           printf "failed to connect\n"
+           threadDelay 1000000
+           again)     
   hSetBuffering handle LineBuffering
+  
   forever $ respond handle $ \case
      SEC Req_CLOSE -> do
        printf "received CLOSE message from game tree\n"
