@@ -1,4 +1,6 @@
-{-# LANGUAGE LambdaCase, TupleSections, FlexibleContexts, OverloadedStrings #-}
+{-# LANGUAGE
+  LambdaCase, TupleSections, FlexibleContexts,
+  OverloadedStrings, ScopedTypeVariables #-}
 
 module CBSD.Potyogos where
 
@@ -11,6 +13,7 @@ import Data.Aeson hiding (Array, Result)
 import Data.Array (Array, (!), (//))
 import Data.Ix (inRange, range)
 import Data.List
+import Data.List.Split
 import qualified Data.Array as A
 
 -- Types
@@ -20,7 +23,6 @@ type Ix     = (Int, Int)
 type Move   = Int
 type GState = Array Ix Cell
 data Cell   = Empty | Filled Player deriving (Eq, Show)
-
 
 -- Constants
 ------------------------------------------------------------
@@ -133,5 +135,14 @@ instance FromJSON Cell where
     1 -> pure $ Filled PMax
     2 -> pure $ Filled PMin
     _ -> empty
-  
-  
+
+newtype GStateJSON = GStateJSON GState deriving (Eq, Show)
+
+instance FromJSON GStateJSON where
+  parseJSON val = do
+    (table :: [[Cell]]) <- parseJSON val
+    pure $ GStateJSON $ A.listArray ixRange $ concat table
+
+instance ToJSON GStateJSON where
+  toJSON (GStateJSON arr) = toJSON $ chunksOf cols $ A.elems arr
+                  
