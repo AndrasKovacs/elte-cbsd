@@ -65,8 +65,8 @@ main getCenterOutPort startHeu
     moves player state = do
       res <- request hCenterOut $ (TC_POSSIBLE_MOVES $
                ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
-      case res of
-        (CT_POSSIBLE_MOVES (ResPossibleMoves moves) :: CenterTree state move) -> do
+      case (res :: CenterTree state move) of
+        CT_POSSIBLE_MOVES (ResPossibleMoves moves) -> do
           pure $ map (\m -> (makeMove player state m, m)) moves
         other ->
           error $

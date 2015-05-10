@@ -12,14 +12,20 @@ import qualified Data.Text as T
 ------------------------------------------------------------
 
 newtype StripEmptyContent a = StripEmptyContent {unStripEmptyContent :: a}
+  deriving (Eq, Show)
 
 stripEmptyContent :: Value -> Value
 stripEmptyContent = _Object . at (T.pack contentField) %~ \case
   Just (Array arr) | null arr -> Nothing
   other -> other
 
+addEmptyContent :: Value -> Value
+addEmptyContent = _Object . at (T.pack contentField) %~ \case
+  Nothing -> Just (Array mempty)
+  other   -> other
+
 instance (FromJSON a) => FromJSON (StripEmptyContent a) where
-  parseJSON val = StripEmptyContent <$> parseJSON (stripEmptyContent val)
+  parseJSON val = StripEmptyContent <$> parseJSON (addEmptyContent val)
 
 instance (ToJSON a) => ToJSON (StripEmptyContent a) where
   toJSON (StripEmptyContent a) = stripEmptyContent $ toJSON a

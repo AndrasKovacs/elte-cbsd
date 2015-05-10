@@ -1,4 +1,6 @@
-{-# LANGUAGE ScopedTypeVariables, TupleSections, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE
+  ScopedTypeVariables, TupleSections, LambdaCase,
+  RankNTypes, ScopedTypeVariables #-}
 
 module CBSD.Messages.SocketComm where
 
@@ -22,21 +24,24 @@ listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
   catch ((port,) <$> listenOn (PortNumber port))
         (\(_ :: IOException) -> go (port + 1))
 
-
 -- Comm primitives (Note the StripEmptyContent wrapping!)
 ------------------------------------------------------------  
 
--- | If the message isn't valid, try reading again
-getMessage :: FromJSON a => Handle -> IO a
+-- | Try reading until the handle becomes non-empty
+getMessage :: forall a. FromJSON a => Handle -> IO a
 getMessage handle = do
   line <- B.hGetLine handle
+--  printf "getMessage: %s\n" (show line)
   maybe
     (error $ printf "received invalid message: %s\n" (show line))
     (pure . unStripEmptyContent)
     (decodeStrict line)
 
 putMessage :: ToJSON a => Handle -> a -> IO ()
-putMessage handle = CB.hPutStrLn handle . LB.toStrict . encode . StripEmptyContent
+putMessage handle a = do
+  let line = encode (StripEmptyContent a)
+--  printf "putMessage: %s\n" (show line)
+  CB.hPutStrLn handle $ LB.toStrict line
   
 -- | Send request, then get response
 request :: (ToJSON a, FromJSON b) => Handle -> a -> IO b
@@ -69,7 +74,7 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   -- Get center port number
   printf "getting port number of center\n"
   centerOutPort <- getCenterOutPort
-  printf "acquired port number of center: %s\n" (show centerOutPort)  
+  printf "acquired port number: %s\n" (show centerOutPort)  
 
   -- Connect to center
   hCenterOut <- fix $ \again -> do
@@ -80,7 +85,7 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
            threadDelay 1000000
            again)
   hSetBuffering hCenterOut LineBuffering      
-  printf "connected to center\n"
+  printf "connected\n"
 
   -- Accept center
   (centerInPort, centerInSock) <- listenOnUnusedPort

@@ -1,21 +1,25 @@
 
 module Main where
 
-import Network
+import CBSD.Messages.Types
+import CBSD.Search
+import CBSD.Utils.GetPortArg
+import qualified CBSD.Ataxx as Ataxx
+import qualified CBSD.Components.Heuristic as Heu
+import qualified CBSD.Components.Tree as Tree
+
 import Control.Concurrent
 import Data.Coerce
 import Data.Maybe
-
-import CBSD.Search
-import CBSD.Messages.Types
-import CBSD.Utils.GetPortArg
-
-import qualified CBSD.Ataxx as Ataxx
-import qualified CBSD.Components.Tree as Tree
-import qualified CBSD.Components.Heuristic as Heu
+import Network
+import Text.Printf
+import Data.Aeson
 
 makeMove :: Player -> Ataxx.GStateJSON -> Ataxx.MoveJSON -> Ataxx.GStateJSON
-makeMove p s m = fromJust $ coerce Ataxx.makeMove p s m
+makeMove p s m =
+  fromMaybe
+     (error $ printf "EVALUATE_MOVE: invalid move: %s\n" (show $ encode m))
+     (coerce Ataxx.makeMove p s m)
 
 startHeu :: PortNumber -> IO ()
 startHeu port = do

@@ -10,8 +10,10 @@ import CBSD.Search
 
 import Control.Lens hiding ((.=))
 import Data.Aeson hiding (Result)
+import Data.Aeson.Types hiding (Result)
 import Control.Applicative
 import Data.List
+import Data.List.Split
 import Data.Word
 import Data.Ix (range, inRange)
 
@@ -167,7 +169,9 @@ instance FromJSON MoveJSON where
 newtype GStateJSON = GStateJSON GState deriving (Eq, Show)
 
 instance ToJSON GStateJSON where
-  toJSON (GStateJSON v) = toJSON $ UV.map (\case Block -> Empty; x -> x) v
+  toJSON (GStateJSON v) =
+    toJSON $ chunksOf size $ map (\case Block -> Empty; x -> x) $ UV.toList v
 
 instance FromJSON GStateJSON where
-  parseJSON val = GStateJSON . (//blocks) <$> parseJSON val
+  parseJSON val =
+    GStateJSON . (//blocks) . UV.fromList . concat <$> (parseJSON val :: Parser [[Cell]])

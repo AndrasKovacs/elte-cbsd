@@ -34,6 +34,7 @@ main getPort heu = withSocketsDo $ do
            threadDelay 1000000
            again)     
   hSetBuffering handle LineBuffering
+  printf "connected\n"
   
   forever $ respond handle $ \case
      TH_CLOSE -> do
