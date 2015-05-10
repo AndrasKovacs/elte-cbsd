@@ -133,8 +133,8 @@ data CenterLogic state move
 $(deriveJSON taggingOptions ''CenterLogic)
 
 data Connect
-  = Req_CONNECT ReqConnect
-  | Res_CONNECT ResConnect
+  = Res_CONNECT ResConnect  
+  | Req_CONNECT ReqConnect
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''Connect)           
 

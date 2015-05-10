@@ -13,7 +13,6 @@ import Text.Printf
 import Control.Monad
 import Data.Function
 
-
 setupHeuristic :: (PortNumber -> IO ()) -> IO (PortNumber, Handle)
 setupHeuristic startHeu = do
   (heuPort, heuSock) <- listenOnUnusedPort
@@ -23,8 +22,7 @@ setupHeuristic startHeu = do
   (hHeu, _, _) <- accept heuSock
   hSetBuffering hHeu LineBuffering
   printf "accepted heuristic\n"
-  pure (heuPort, hHeu)
-  
+  pure (heuPort, hHeu)  
 
 main ::
      forall state move.

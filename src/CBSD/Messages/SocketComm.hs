@@ -24,11 +24,10 @@ listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
 
 -- | If the message isn't valid, try reading again
 getMessage :: FromJSON a => Handle -> IO a
-getMessage handle = fix $ \again -> do
+getMessage handle = do
   line <- B.hGetLine handle
   maybe
-    (do printf "received invalid message: %s\n" (show line)
-        again)
+    (error $ printf "received invalid message: %s\n" (show line))
     pure
     (decodeStrict line)
 
@@ -44,11 +43,10 @@ request handle a = do
 -- | Get request, make response and send it
 --   If the request isn't valid, try reading again
 respond :: (FromJSON a, ToJSON a) => Handle -> (a -> IO (Maybe a)) -> IO ()
-respond handle makeResponse = fix $ \again -> do
+respond handle makeResponse = do
   req <- getMessage handle
   maybe
-    (do printf "received invalid request: %s\n" (show (encode req))
-        again)        
+    (error $ printf "received invalid request: %s\n" (show $ encode req))
     (putMessage handle)
     =<< makeResponse req
 
@@ -85,8 +83,16 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   
   putMessage hCenterOut (SEC (Req_CONNECT $
     ReqConnect gameTypes name componentType (fromIntegral centerInPort)))
-                             
-  printf "CONNECT message sent to center\n"  
+  printf "CONNECT request sent to center\n"      
+
+  resConnect <- getMessage hCenterOut
+  case resConnect of
+    SEC (Res_CONNECT (ResConnect res _)) -> case res of
+      OK   -> pure ()
+      FAIL -> error "received FAILURE code in CONNECT response from center\n"
+    other -> error $ printf "expected CONNECT response, got %s\n" (show $ encode other)
+  printf "CONNECT response OK\n"
+                                 
   (hCenterIn, _, _) <- accept centerInSock
   hSetBuffering hCenterIn LineBuffering
   printf "accepted center\n"

@@ -1,7 +1,7 @@
 
 {-# LANGUAGE LambdaCase, RankNTypes, ScopedTypeVariables, FlexibleContexts #-}
 
-module CBSD.Components.Tree where
+module CBSD.Components.Logic where
 
 import CBSD.Messages.SocketComm
 import CBSD.Messages.Types
@@ -19,7 +19,7 @@ main ::
      (FromJSON state, ToJSON state,
       FromJSON move, ToJSON move)
   => IO PortNumber                        -- ^ Port of center
-  -> (Player -> state -> [move]) -- ^ Possible moves
+  -> (Player -> state -> [move])          -- ^ Possible moves
   -> state                                -- ^ Start state
   -> (Player -> state -> move -> state)   -- ^ Update state with move
   -> String                               -- ^ Name of component
