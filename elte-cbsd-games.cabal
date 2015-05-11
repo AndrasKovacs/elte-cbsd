@@ -12,7 +12,7 @@ cabal-version:       >=1.10
 library
   default-language:    Haskell2010
   hs-source-dirs:      src
-  ghc-options: -O2
+  ghc-options: 
 
   exposed-modules:     
     CBSD.Potyogos,                       
@@ -30,22 +30,23 @@ library
     TemplateHaskell
     
   build-depends:       
-     aeson >= 0.8.0.2
-   , array >=0.5 && <0.6
-   , async >= 2
-   , base >=4.7 && <4.9
-   , bytestring >= 0.10.6.0
-   , lens >=4.7 && <4.10
-   , lens-aeson >= 1.0.0.3
-   , mtl >=2.2 && <2.3
-   , network
-   , split >=0.2 && <0.3
-   , text >= 1.2
-   , timeout-with-results >=0.2 && <0.3
-   , transformers >=0.4 && <0.5
-   , unordered-containers >= 0.2.5
-   , vector >=0.10 && <0.11
-   , vector-th-unbox >=0.2 && <0.3
+                           aeson >= 0.8.0.2
+                       , array >=0.5 && <0.6
+                       , async >= 2
+                       , base >=4.7 && <4.9
+                       , bytestring >= 0.10.6.0
+                       , lens >=4.7 && <4.10
+                       , lens-aeson >= 1.0.0.3
+                       , mtl >=2.2 && <2.3
+                       , network
+                       , process >= 1.2.3.0
+                       , split >=0.2 && <0.3
+                       , text >= 1.2
+                       , timeout-with-results >=0.2 && <0.3
+                       , transformers >=0.4 && <0.5
+                       , unordered-containers >= 0.2.5
+                       , vector >=0.10 && <0.11
+                       , vector-th-unbox >=0.2 && <0.3
 
       
 executable ataxx-tree-with-heu
@@ -54,13 +55,14 @@ executable ataxx-tree-with-heu
   hs-source-dirs: TestExecs/Components
   main-is: AtaxxTreeWithHeu.hs
   other-modules: Execs
-  ghc-options: -O2
+  ghc-options: 
   
   build-depends:
-        aeson ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games
+                  aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process >= 1.2.3.0
 
 executable ataxx-heu
            
@@ -69,13 +71,14 @@ executable ataxx-heu
   main-is: AtaxxHeu.hs
   other-modules:
     Execs
-  ghc-options: -O2
+  ghc-options: 
   
   build-depends:
-        aeson , 
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games
+                  aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process >= 1.2.3.0
 
 executable potyogos-heu
            
@@ -83,13 +86,14 @@ executable potyogos-heu
   hs-source-dirs: TestExecs/Components
   main-is: PotyogosHeu.hs
   other-modules: Execs
-  ghc-options: -O2
+  ghc-options: 
   
   build-depends:
-        aeson ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games 
+                  aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process >= 1.2.3.0
 
 executable potyogos-logic
            
@@ -97,13 +101,14 @@ executable potyogos-logic
   hs-source-dirs: TestExecs/Components
   main-is: PotyogosLogic.hs
   other-modules: Execs
-  ghc-options: -O2
+  ghc-options: 
   
   build-depends:
-        aeson ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games 
+                  aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process >= 1.2.3.0
 
 executable potyogos-tree-with-heu
            
@@ -111,13 +116,14 @@ executable potyogos-tree-with-heu
   hs-source-dirs: TestExecs/Components
   main-is: PotyogosTreeWithHeu.hs
   other-modules: Execs
-  ghc-options: -O2
+  ghc-options: 
   
   build-depends:
-        aeson ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games 
+                  aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process >= 1.2.3.0
 
 executable ataxx-logic
            
@@ -125,38 +131,41 @@ executable ataxx-logic
   hs-source-dirs: TestExecs/Components
   main-is: AtaxxLogic.hs
   other-modules: Execs
-  ghc-options: -O2
+  ghc-options: 
   
   build-depends:
-        aeson ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games 
+                  aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process >= 1.2.3.0
                 
-executable ataxx
+-- executable ataxx
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs
-  main-is: Games/Ataxx.hs
-  ghc-options: -O2
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs
+--   main-is: Games/Ataxx.hs
+--   ghc-options: 
   
-  build-depends:
-        split ,
-        vector ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games
+--   build-depends:
+--                   base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , process >= 1.2.3.0
+--                 , split
+--                 , vector
 
-executable potyogos
+-- executable potyogos
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs
-  main-is: Games/Potyogos.hs
-  ghc-options: -O2
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs
+--   main-is: Games/Potyogos.hs
+--   ghc-options: 
   
-  build-depends:
-        array ,
-        split ,
-        network ,
-        base >= 4.7 && <4.9 ,
-        elte-cbsd-games                                
+--   build-depends:
+--                   array
+--                 , base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , process >= 1.2.3.0
+--                 , split

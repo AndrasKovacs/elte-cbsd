@@ -18,7 +18,7 @@ module CBSD.Search (
   , minimax
   , alphaBeta
   , orderWith
-  ) where
+  ) where  
 
 import Control.Applicative
 import Control.Lens
@@ -62,7 +62,7 @@ type Depth = Int
 type Search m score state move =
      (Ord score, Monad m)
   => (Player -> state -> m [(state, move)]) -- possible moves
-  -> (state -> m score)                     -- heuristic
+  -> (state -> Player -> m score)           -- heuristic
   -> Depth                                  -- max search depth     
   -> Player                                 -- starting player
   -> state                                  -- starting state
@@ -80,7 +80,7 @@ nextMove ::
      (Ord score, Show score)
   => Bool                                    -- verbose mode
   -> (Player -> state -> IO [(state, move)]) -- next moves
-  -> (state -> IO score)                     -- heuristic
+  -> (state -> Player -> IO score)           -- heuristic
   -> Search IO score state move              -- search algorithm     
   -> Int                                     -- timeout in microseconds
   -> Depth                                   -- max search depth
@@ -132,12 +132,12 @@ orderWith d ordAlg alg moves heu = alg ordMoves heu where
 minimax :: Search m score state move
 minimax moves heu = go
   where
-    go d p s | d <= 0 = heu s <&> (,Nothing)
+    go d p s | d <= 0 = heu s p <&> (,Nothing)
     go d p s = do
       let compute = case p of PMax -> maximumBy; _ -> minimumBy
       ms <- moves p s
       if null ms then
-         heu s <&> (,Nothing)
+         heu s p <&> (,Nothing)
       else do
          ms <- ms& each . _1 %%~ go (d - 1) (switch p)
          let ((score, _) , move) = compute (comparing (fst.fst)) ms
@@ -146,7 +146,7 @@ minimax moves heu = go
 alphaBeta :: Bounded score => Search m score state move
 alphaBeta moves heu = go minBound maxBound                           
   where                           
-    go _    _     d p s | d <= 0 = heu s <&> (,Nothing)
+    go _    _     d p s | d <= 0 = heu s p <&> (,Nothing)
     go alpha beta d p s = do
       
       let (upd, cmp, startBound, bound, stop, goNext) = case p of
@@ -165,5 +165,5 @@ alphaBeta moves heu = go minBound maxBound
                   
       ms <- moves p s
       if null ms 
-        then heu s <&> (,Nothing)
+        then heu s p <&> (,Nothing)
         else either id fst <$> runExceptT (loop ms)

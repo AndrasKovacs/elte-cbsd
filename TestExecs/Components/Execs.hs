@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Execs where
   
@@ -19,6 +20,9 @@ import Data.Maybe
 import Data.Aeson
 import Text.Printf
 
+import System.Environment
+
+
 
 -- TODO : Factor out all the code duplication
 -- Export JSON-friendly functions form Ataxx and Potyogos
@@ -28,13 +32,13 @@ potyogosHeu :: IO ()
 potyogosHeu = withSocketsDo $
   Heu.main
     getPortArg
-    (coerce Potyogos.smarterHeu :: Potyogos.GStateJSON -> Int)
+    (coerce (\s (_ :: Player) -> Potyogos.smarterHeu s) :: Potyogos.GStateJSON -> Player -> Int)
 
 ataxxHeu :: IO ()
 ataxxHeu = withSocketsDo $
   Heu.main
     getPortArg
-    (coerce Ataxx.heu :: Ataxx.GStateJSON -> Int)
+    (coerce (\s (_ :: Player) -> Ataxx.heu s) :: Ataxx.GStateJSON -> Player -> Int)
 
 potyogosLogic :: IO ()
 potyogosLogic = withSocketsDo $
@@ -74,7 +78,7 @@ potyogosTreeWithHeu = withSocketsDo $ do
     
     startHeu :: PortNumber -> IO ()
     startHeu port = do
-      forkIO $ Heu.main (pure port) (coerce Potyogos.smarterHeu :: Potyogos.GStateJSON -> Int)
+      forkIO $ Heu.main (pure port) (coerce (\s (_ :: Player) -> Potyogos.smarterHeu s) :: Potyogos.GStateJSON -> Player -> Int)
       pure ()      
 
 ataxxLogic :: IO ()
@@ -115,5 +119,6 @@ ataxxTreeWithHeu = withSocketsDo $ do
     
     startHeu :: PortNumber -> IO ()
     startHeu port = do
-      forkIO $ Heu.main (pure port) (coerce Ataxx.heu :: Ataxx.GStateJSON -> Int)
-      pure ()    
+      forkIO $ Heu.main (pure port) (coerce (\s (_ :: Player) -> Ataxx.heu s) :: Ataxx.GStateJSON -> Player -> Int)
+      pure ()
+

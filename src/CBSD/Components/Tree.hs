@@ -52,10 +52,10 @@ main getCenterOutPort startHeu
 
   -- Set up search
   let
-    heu :: state -> IO Score
-    heu state = do
-      request hHeu (TH_EVAL state) >>= \case
-        HT_EVAL_RE score -> pure $ Score score
+    heu :: state -> Player -> IO Score
+    heu state player = do
+      request hHeu (TH_EVAL state player :: TreeHeu state) >>= \case
+        (TH_EVAL_RE score :: TreeHeu state) -> pure $ Score score
         other -> 
           error $
             printf "expected EVAL_RE message, got %s\n"

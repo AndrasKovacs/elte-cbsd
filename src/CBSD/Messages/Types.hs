@@ -1,36 +1,15 @@
-{-# LANGUAGE TemplateHaskell, LambdaCase #-}
+{-# LANGUAGE
+   TemplateHaskell, LambdaCase, OverloadedStrings,
+   ScopedTypeVariables #-}
 
 module CBSD.Messages.Types where
 import CBSD.Messages.TH
 import CBSD.Search
-import Control.Lens
+import Control.Lens hiding ((.=))
 import Data.Aeson
 import Data.Aeson.Lens
 import Data.Aeson.TH
 import qualified Data.Text as T
-
-------------------------------------------------------------
-
-newtype StripEmptyContent a = StripEmptyContent {unStripEmptyContent :: a}
-  deriving (Eq, Show)
-
-stripEmptyContent :: Value -> Value
-stripEmptyContent = _Object . at (T.pack contentField) %~ \case
-  Just (Array arr) | null arr -> Nothing
-  other -> other
-
-addEmptyContent :: Value -> Value
-addEmptyContent = _Object . at (T.pack contentField) %~ \case
-  Nothing -> Just (Array mempty)
-  other   -> other
-
-instance (FromJSON a) => FromJSON (StripEmptyContent a) where
-  parseJSON val = StripEmptyContent <$> parseJSON (addEmptyContent val)
-
-instance (ToJSON a) => ToJSON (StripEmptyContent a) where
-  toJSON (StripEmptyContent a) = stripEmptyContent $ toJSON a
-
-------------------------------------------------------------    
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
@@ -114,21 +93,22 @@ data TreeCenter state move
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''TreeCenter)
 
-data TreeHeu state
-  = TH_CLOSE    
-  | TH_EVAL {
-    theu_state :: state }
-  | TH_EVAL_RE {
-    theu_stateValue :: Int}
-  deriving (Eq, Show)
-$(deriveJSON taggingOptions ''TreeHeu)
+-- data TreeHeu state
+--   = TH_CLOSE    
+--   | TH_EVAL {
+--     theu_state :: state }
+--   | TH_EVAL_RE {
+--     theu_stateValue :: Int}
+--   deriving (Eq, Show)
+-- $(deriveJSON taggingOptions ''TreeHeu)
 
-data HeuTree
-  = HT_EVAL_RE {
-    heut_stateValue :: Int}
-  | HT_DUMMY             -- HACK!!!!!!!!!!
-  deriving (Eq, Show)
-$(deriveJSON taggingOptions ''HeuTree)           
+-- data HeuTree
+--   = HT_EVAL_RE {
+--     heut_stateValue :: Int}
+--   | HT_DUMMY             -- HACK!!!!!!!!!!
+--   deriving (Eq, Show)
+-- $(deriveJSON taggingOptions ''HeuTree) 
+  
 
 data ReqEvaluateMove state move = ReqEvaluateMove {
   reqEval_state :: State state,
@@ -155,3 +135,56 @@ data LogicCenter state move
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''LogicCenter)
 
+
+
+
+
+instance (ToJSON state) => ToJSON (TreeHeu state) where
+  toJSON TH_CLOSE =
+    object [
+      "@type"       .= T.pack "komp_common.MessageFactory$MSG_Close",
+      "messageType" .= T.pack "CLOSE"
+      ]
+  toJSON (TH_EVAL state player) =
+    object [
+      "@type" .= T.pack "komp_common.MessageFactory$MSG_Eval",
+      "state" .= object [
+        "board" .= state,
+        "nextPlayer" .= player
+        ],
+      "messageType" .= T.pack "EVAL"
+      ]
+  toJSON (TH_EVAL_RE stateVal) =
+    object [
+      "@type" .= T.pack "komp_common.MessageFactory$MSG_EvalRe",
+      "stateValue" .= stateVal,
+      "messageType" .= T.pack "EVALRE"
+      ]
+
+instance (FromJSON state) => FromJSON (TreeHeu state) where
+  parseJSON = withObject "" $ \obj -> do
+    (ty :: String) <- obj .: "messageType"
+    case ty of
+     "CLOSE" -> pure TH_CLOSE
+     "EVAL"  -> do
+       stateObj <- obj .: "state"
+       TH_EVAL <$> (stateObj .: "board") <*> (stateObj .: "nextPlayer")
+     "EVALRE" -> TH_EVAL_RE <$> (obj .: "stateValue")
+
+data TreeHeu state
+  = TH_CLOSE    
+  | TH_EVAL {
+    theu_state :: state,
+    theu_nextPlayer :: Player}
+  | TH_EVAL_RE {
+    theu_stateValue :: Int}
+  deriving (Eq, Show)
+
+-- EVAL:
+-- {"@type":"komp_common.MessageFactory$MSG_Eval","state":{"board":[[1,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[2,0,0,0,0,0,0,1]],"nextPlayer":1},"messageType":"EVAL"}
+
+-- EVAL_RE:
+-- {"@type":"komp_common.MessageFactory$MSG_EvalRe","stateValue":1,"messageType":"EVALRE"}
+
+-- CLOSE:
+-- {"@type":"komp_common.MessageFactory$MSG_Close","messageType":"CLOSE"}

@@ -3,7 +3,6 @@
   RankNTypes, ScopedTypeVariables #-}
 
 module CBSD.Messages.SocketComm where
-
 import CBSD.Messages.Types
 
 import Network
@@ -34,12 +33,12 @@ getMessage handle = do
 --  printf "getMessage: %s\n" (show line)
   maybe
     (error $ printf "received invalid message: %s\n" (show line))
-    (pure . unStripEmptyContent)
+    pure
     (decodeStrict line)
 
 putMessage :: ToJSON a => Handle -> a -> IO ()
 putMessage handle a = do
-  let line = encode (StripEmptyContent a)
+  let line = encode a
 --  printf "putMessage: %s\n" (show line)
   CB.hPutStrLn handle $ LB.toStrict line
   
@@ -107,4 +106,3 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   hSetBuffering hCenterIn LineBuffering
   printf "accepted center\n"
   pure (centerInPort, hCenterIn, centerOutPort, hCenterOut)    
-

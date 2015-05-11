@@ -4,6 +4,7 @@ module CBSD.Components.Heuristic where
 
 import CBSD.Messages.SocketComm
 import CBSD.Messages.Types
+import CBSD.Search
 
 import Data.Aeson
 import Network
@@ -16,9 +17,10 @@ import Control.Monad
 import System.Exit
 
 main ::
+     forall state.
      (ToJSON state, FromJSON state)
   => IO PortNumber
-  -> (state -> Int)
+  -> (state -> Player -> Int)
   -> IO ()
 main getPort heu = withSocketsDo $ do
   hSetBuffering stdout LineBuffering
@@ -41,7 +43,7 @@ main getPort heu = withSocketsDo $ do
        printf "received CLOSE message from game tree\n"
        printf "closing now\n"
        exitSuccess
-     TH_EVAL (State _ _ board _) ->
-       pure $ Just $ HT_EVAL_RE (heu board)
+     TH_EVAL board player ->
+       pure $ Just $ (TH_EVAL_RE (heu board player) :: TreeHeu state)
      _ -> pure Nothing          
             

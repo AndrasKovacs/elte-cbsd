@@ -1,0 +1,4 @@
+{
+    "game_server_port": 12345,
+    "main_gui_port": 55426
+}
