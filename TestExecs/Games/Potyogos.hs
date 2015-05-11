@@ -48,10 +48,10 @@ showTable s = unlines lines where
      ++ [take cols (repeat '-'), take cols ['A'..]]
 
 parseInp :: String -> Maybe Move
-parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A' + 1)
+parseInp (col:[]) | inRange ('A', 'G') col = Just (ord col - ord 'A')
 parseInp _ = Nothing
 
-mkSearch = nextMove True ((pure.).moves) (pure.smarterHeu)
+mkSearch = nextMove True ((pure.).moves) (\s _ -> pure $ smarterHeu s)
 easy   = mkSearch alphaBeta (1*10^6) 2
 medium = mkSearch alphaBeta (1*10^6) 4
 hard   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) maxBound

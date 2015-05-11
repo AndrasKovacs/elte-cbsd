@@ -25,7 +25,7 @@ main ::
   -> String                               -- ^ Name of component
   -> GameType                             -- ^ Game type
   -> IO ()
-main getCenterOutPort moves startState makeMove name gameType = withSocketsDo $ do
+main getCenterOutPort moves startState makeMove name gameType = do
 
   (centerInPort, hCenterIn, centerOutPort, hCenterOut) <-
     registerAtCenter

@@ -1,15 +1,14 @@
-{-# LANGUAGE
-   TemplateHaskell, LambdaCase, OverloadedStrings,
-   ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell, LambdaCase, OverloadedStrings, ScopedTypeVariables #-}
 
 module CBSD.Messages.Types where
 import CBSD.Messages.TH
 import CBSD.Search
-import Control.Lens hiding ((.=))
 import Data.Aeson
-import Data.Aeson.Lens
+import Data.Aeson.Types
+import Control.Applicative
 import Data.Aeson.TH
 import qualified Data.Text as T
+
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
@@ -91,24 +90,7 @@ data TreeCenter state move
   | TC_POSSIBLE_MOVES (ReqPossibleMoves state)    
   | TC_DUMMY             -- HACK!!!!!!!!!!    
   deriving (Eq, Show)
-$(deriveJSON taggingOptions ''TreeCenter)
-
--- data TreeHeu state
---   = TH_CLOSE    
---   | TH_EVAL {
---     theu_state :: state }
---   | TH_EVAL_RE {
---     theu_stateValue :: Int}
---   deriving (Eq, Show)
--- $(deriveJSON taggingOptions ''TreeHeu)
-
--- data HeuTree
---   = HT_EVAL_RE {
---     heut_stateValue :: Int}
---   | HT_DUMMY             -- HACK!!!!!!!!!!
---   deriving (Eq, Show)
--- $(deriveJSON taggingOptions ''HeuTree) 
-  
+$(deriveJSON taggingOptions ''TreeCenter)  
 
 data ReqEvaluateMove state move = ReqEvaluateMove {
   reqEval_state :: State state,
@@ -136,8 +118,26 @@ data LogicCenter state move
 $(deriveJSON taggingOptions ''LogicCenter)
 
 
+-- TreeHeu is parsed manually
+------------------------------------------------------------
 
+data TreeHeu state
+  = TH_CLOSE    
+  | TH_EVAL {
+    theu_state :: state,
+    theu_nextPlayer :: Player}
+  | TH_EVAL_RE {
+    theu_stateValue :: Int}
+  deriving (Eq, Show)
 
+pToInt :: Player -> Int
+pToInt = \case PMax -> 1; _ -> 2
+
+intToP :: Value -> Parser Player
+intToP = withScientific "" $ \case
+  1 -> pure PMax
+  2 -> pure PMin
+  _ -> empty
 
 instance (ToJSON state) => ToJSON (TreeHeu state) where
   toJSON TH_CLOSE =
@@ -150,7 +150,7 @@ instance (ToJSON state) => ToJSON (TreeHeu state) where
       "@type" .= T.pack "komp_common.MessageFactory$MSG_Eval",
       "state" .= object [
         "board" .= state,
-        "nextPlayer" .= player
+        "nextPlayer" .= pToInt player
         ],
       "messageType" .= T.pack "EVAL"
       ]
@@ -168,23 +168,6 @@ instance (FromJSON state) => FromJSON (TreeHeu state) where
      "CLOSE" -> pure TH_CLOSE
      "EVAL"  -> do
        stateObj <- obj .: "state"
-       TH_EVAL <$> (stateObj .: "board") <*> (stateObj .: "nextPlayer")
+       TH_EVAL <$> (stateObj .: "board") <*> (intToP =<< (stateObj .: "nextPlayer"))
      "EVALRE" -> TH_EVAL_RE <$> (obj .: "stateValue")
-
-data TreeHeu state
-  = TH_CLOSE    
-  | TH_EVAL {
-    theu_state :: state,
-    theu_nextPlayer :: Player}
-  | TH_EVAL_RE {
-    theu_stateValue :: Int}
-  deriving (Eq, Show)
-
--- EVAL:
--- {"@type":"komp_common.MessageFactory$MSG_Eval","state":{"board":[[1,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[2,0,0,0,0,0,0,1]],"nextPlayer":1},"messageType":"EVAL"}
-
--- EVAL_RE:
--- {"@type":"komp_common.MessageFactory$MSG_EvalRe","stateValue":1,"messageType":"EVALRE"}
-
--- CLOSE:
--- {"@type":"komp_common.MessageFactory$MSG_Close","messageType":"CLOSE"}
+     

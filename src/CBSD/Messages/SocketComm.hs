@@ -23,7 +23,6 @@ listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
   catch ((port,) <$> listenOn (PortNumber port))
         (\(_ :: IOException) -> go (port + 1))
 
--- Comm primitives (Note the StripEmptyContent wrapping!)
 ------------------------------------------------------------  
 
 -- | Try reading until the handle becomes non-empty

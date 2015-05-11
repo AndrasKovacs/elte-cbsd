@@ -37,7 +37,6 @@ main = do
   getLine
   pure ()
 
-
 showCell :: Cell -> Char
 showCell = \case
   Filled PMax -> 'X'
@@ -65,7 +64,7 @@ readInp p s (from1:from2:' ':to1:to2:[]) =
       elem move (map snd $ moves p s)]
 readInp _ _ _ = Nothing     
 
-mkSearch = nextMove True ((pure.).moves) (pure.heu)
+mkSearch = nextMove True ((pure.).moves) (\s _ -> pure $ heu s)
 
 easy     = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) 2
 medium   = mkSearch (orderWith 0 minimax alphaBeta) (1*10^6) 3

@@ -22,7 +22,7 @@ main ::
   => IO PortNumber
   -> (state -> Player -> Int)
   -> IO ()
-main getPort heu = withSocketsDo $ do
+main getPort heu = do
   hSetBuffering stdout LineBuffering
   printf "acquiring game tree port number\n"
   port <- getPort

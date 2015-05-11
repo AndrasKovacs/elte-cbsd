@@ -7,13 +7,14 @@ module CBSD.Potyogos where
 import CBSD.Search
 
 import Control.Applicative
-import Control.Lens hiding ((.=))
+import Control.Lens hiding ((.=), coerce)
 import Control.Monad
 import Data.Aeson hiding (Array, Result)
 import Data.Array (Array, (!), (//))
 import Data.Ix (inRange, range)
 import Data.List
 import Data.List.Split
+import Data.Coerce
 import qualified Data.Array as A
 
 -- Types
@@ -32,10 +33,13 @@ cols = 7
 rows = 6
 
 ixRange :: (Ix, Ix)
-ixRange = ((1, 1), (rows, cols))
+ixRange = ((0, 0), (rows - 1, cols - 1))
 
 start :: GState
 start = A.listArray ixRange $ repeat Empty
+
+publicStart :: GStateJSON
+publicStart = coerce start
 
 ------------------------------------------------------------
 
@@ -80,7 +84,13 @@ makeMove p s m = indexOfMove s m <&> (\ix -> s // [(ix, Filled p)])
 moves :: Player -> GState -> [(GState, Move)]
 moves p s = case result s of
   Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (indexOfDrop s) colIxs]
-  _        -> []  
+  _        -> []
+
+publicMakeMove :: Player -> GStateJSON -> MoveJSON -> Maybe GStateJSON
+publicMakeMove = coerce makeMove
+
+publicMoves :: Player -> GStateJSON -> [MoveJSON]
+publicMoves p s = coerce (map snd $ moves p (coerce s))
 
 -- Heuristics
 ------------------------------------------------------------
@@ -108,6 +118,12 @@ smarterHeu s = foldM score 0 neighs ^. chosen where
       (4, _) -> Left $ adjustHeu p maxBound
       (g, e) -> Right $ acc + (if g + e >= 4 then adjustHeu p (Score g) else 0)
   score acc _ = Right acc
+
+publicDumbHeu :: GStateJSON -> Player -> Int
+publicDumbHeu = coerce (\s (_ :: Player) -> dumbHeu s)
+
+publicSmarterHeu :: GStateJSON -> Player -> Int
+publicSmarterHeu = coerce (\s (_ :: Player) -> smarterHeu s)
 
 
 -- Serialization

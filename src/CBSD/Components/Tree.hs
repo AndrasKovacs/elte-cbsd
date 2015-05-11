@@ -36,8 +36,7 @@ main ::
   -> Int                                -- ^ Search timeout
   -> (Player -> state -> move -> state) -- ^ Update state with move
   -> IO ()
-main getCenterOutPort startHeu
-     searchAlg name gameTypes timeout makeMove = withSocketsDo $ do
+main getCenterOutPort startHeu searchAlg name gameTypes timeout makeMove = do
 
   -- Register at center
   (portCenterIn, hCenterIn, portCenterOut, hCenterOut) <-

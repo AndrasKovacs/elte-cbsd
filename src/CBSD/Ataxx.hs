@@ -2,13 +2,14 @@
 {-# LANGUAGE
   OverloadedStrings,
   LambdaCase, TemplateHaskell, TupleSections,
-  MultiParamTypeClasses, TypeFamilies #-}
+  MultiParamTypeClasses, TypeFamilies,
+  ScopedTypeVariables #-}
 
 module CBSD.Ataxx where
 
 import CBSD.Search
 
-import Control.Lens hiding ((.=))
+import Control.Lens hiding ((.=), coerce)
 import Data.Aeson hiding (Result)
 import Data.Aeson.Types hiding (Result)
 import Control.Applicative
@@ -16,6 +17,7 @@ import Data.List
 import Data.List.Split
 import Data.Word
 import Data.Ix (range, inRange)
+import Data.Coerce
 
 import qualified Data.Vector.Unboxed as UV
 import qualified Data.Vector.Unboxed.Mutable as MUV
@@ -101,6 +103,11 @@ moves p s = singleStep ++ doubleStep where
 makeMove :: Player -> GState -> Move -> Maybe GState
 makeMove p s m = fst <$> (find ((==m).snd) $ moves p s)
 
+publicMakeMove :: Player -> GStateJSON -> MoveJSON -> Maybe GStateJSON
+publicMakeMove = coerce makeMove
+
+publicMoves :: Player -> GStateJSON -> [MoveJSON]
+publicMoves p s = coerce (map snd $ moves p (coerce s))
 
 -- Heuristic
 ------------------------------------------------------------
@@ -119,6 +126,8 @@ heu = UV.foldl' go 0 where
   go acc (Filled PMin) = acc - 1
   go acc _             = acc
 
+publicHeu :: GStateJSON -> Player -> Int
+publicHeu = coerce (\s (_ :: Player) -> heu s)
 
 -- Start state
 ------------------------------------------------------------
@@ -131,6 +140,9 @@ start = empty // (p1Start ++ p2Start ++ blocks) where
   empty   = UV.fromList $ replicate vecSize Empty
   p1Start = map (,Filled PMax) [ix2 0 0, ix2 (size - 1) (size - 1)]
   p2Start = map (,Filled PMin) [ix2 (size - 1) 0, ix2 0 (size - 1)]
+
+publicStart :: GStateJSON
+publicStart = coerce start
 
 -- Serialization
 ------------------------------------------------------------
