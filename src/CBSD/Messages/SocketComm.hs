@@ -63,9 +63,7 @@ registerAtCenter ::
   -> String            -- ^ Component name
   -> [GameType]        
   -> ComponentType     
-  -> IO (
-    PortNumber, Handle, -- ^ Input port and handle
-    PortNumber, Handle) -- ^ Output port and handle
+  -> IO (PortNumber, Socket, PortNumber, Handle) -- ^ CenterInPort, CenterInSock, CenterOutPort, hCenterOut
 registerAtCenter getCenterOutPort name gameTypes componentType = do
   hSetBuffering stdout LineBuffering
 
@@ -101,7 +99,4 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
     other -> error $ printf "expected CONNECT response, got %s\n" (show $ encode other)
   printf "CONNECT response OK\n"
                                  
-  (hCenterIn, _, _) <- accept centerInSock
-  hSetBuffering hCenterIn LineBuffering
-  printf "accepted center\n"
-  pure (centerInPort, hCenterIn, centerOutPort, hCenterOut)    
+  pure (centerInPort, centerInSock, centerOutPort, hCenterOut)    
