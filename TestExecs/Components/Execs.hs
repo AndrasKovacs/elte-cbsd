@@ -38,9 +38,9 @@ mkMove moves p s m  = fromMaybe
    (error $ printf "EVALUATE_MOVE: invalid move: %s\n" (show $ encode m))
    (moves p s m)
 
-logicArgErr     = "usage: logic PORT_OF_CENTER"
-specificTreeErr = "usage: tree PORT_OF_CENTER HEURISTIC_CMD"
-heuArgErr       = "usage: heuristic PORT_OF_GAMETREE"
+logicArgErr     = "usage: logic CENTER_PORT"
+specificTreeErr = "usage: tree CENTER_PORT HEURISTIC_COMMAND"
+heuArgErr       = "usage: heuristic GAMETREE_PORT"
 
 potyogosHeu :: IO ()
 potyogosHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Potyogos.publicSmarterHeu
@@ -88,6 +88,10 @@ ataxxTree = withSocketsDo $ do
     [Ataxx]
     1000000
 
+alphaBetaTree :: IO ()
+alphaBetaTree = withSocketsDo $ do
+  Tree.genericMain (orderWith 0 minimax alphaBeta) "AlphaBetaTree" 1000000
+  
 -- potyogosTreeWithHeu :: IO ()
 -- potyogosTreeWithHeu = withSocketsDo $ do
 --   Tree.main

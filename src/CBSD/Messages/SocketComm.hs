@@ -58,6 +58,7 @@ respond handle makeResponse = do
     (putMessage handle)
     =<< makeResponse req
 
+
 registerAtCenter ::
      IO PortNumber     -- ^ Port of center
   -> String            -- ^ Component name
