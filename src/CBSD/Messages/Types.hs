@@ -16,8 +16,19 @@ data ConnectResult = OK | FAILURE deriving (Eq, Show)
 
 $(deriveJSON defaultOptions ''TurnStatus)                      
 $(deriveJSON defaultOptions ''ComponentType)           
-$(deriveJSON defaultOptions ''GameType)           
-$(deriveJSON defaultOptions ''ConnectResult)  
+$(deriveJSON defaultOptions ''ConnectResult)
+
+instance FromJSON GameType where
+  parseJSON = withText "" $ \case
+    "ataxx"  -> pure Ataxx
+    "fox"    -> pure Agarak
+    "amoeba" -> pure Potyogos
+    _        -> empty
+
+instance ToJSON GameType where
+  toJSON Ataxx    = String "ataxx"
+  toJSON Agarak   = String "fox"
+  toJSON Potyogos = String "amoeba"
 
 data ReqConnect = ReqConnect {
   reqc_games :: [GameType],
