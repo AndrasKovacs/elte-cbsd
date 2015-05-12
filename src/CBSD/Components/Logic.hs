@@ -18,12 +18,12 @@ main ::
      forall state move.
      (FromJSON state, ToJSON state,
       FromJSON move, ToJSON move)
-  => IO PortNumber                        -- ^ Port of center
-  -> (Player -> state -> [move])          -- ^ Possible moves
-  -> state                                -- ^ Start state
-  -> (Player -> state -> move -> state)   -- ^ Update state with move
-  -> String                               -- ^ Name of component
-  -> GameType                             -- ^ Game type
+  => IO PortNumber                                  -- ^ Port of center
+  -> (Player -> state -> [MoveAndBoard state move]) -- ^ Possible moves
+  -> state                                          -- ^ Start state
+  -> (Player -> state -> move -> state)             -- ^ Update state with move
+  -> String                                         -- ^ Name of component
+  -> GameType                                       -- ^ Game type
   -> IO ()
 main getCenterOutPort moves startState makeMove name gameType = do
 
@@ -37,8 +37,7 @@ main getCenterOutPort moves startState makeMove name gameType = do
   forever $ do
     (hCenterIn, _, _) <- accept centerInSock    
     respond hCenterIn $ \(msg :: CenterLogic state move) -> do
-      case msg of
-      
+      case msg of      
         (CL_GET_START_STATE :: CenterLogic state move) ->
           pure $ Just $ LC_GET_START_STATE $
             State 0 ONGOING startState PMax
@@ -50,5 +49,6 @@ main getCenterOutPort moves startState makeMove name gameType = do
         
         CL_POSSIBLE_MOVES (ReqPossibleMoves (State _ _ state player)) -> do
           pure $ Just $ LC_POSSIBLE_MOVES $ ResPossibleMoves (moves player state)
+            
     hClose hCenterIn
 

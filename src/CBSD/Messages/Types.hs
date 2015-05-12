@@ -9,9 +9,6 @@ import Control.Applicative
 import Data.Aeson.TH
 import qualified Data.Text as T
 
--- POSSIBLE MOVES KORREKCIÓ: [(state, move)] !!!!!
-
-
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
 data GameType      = Ataxx | Agarak | Potyogos deriving (Eq, Show)
@@ -62,7 +59,7 @@ data ReqTurn state move = ReqTurn {
   reqt_next   :: Maybe Player,
   reqt_moves  :: Maybe [move]
   } deriving (Eq, Show)
-$(deriveJSON messageOptions ''ReqTurn)              
+$(deriveJSON messageOptions ''ReqTurn)
 
 data ResTurn move = ResTurn {
   rest_gameId :: Int,
@@ -73,16 +70,22 @@ $(deriveJSON messageOptions ''ResTurn)
 data ReqPossibleMoves state = ReqPossibleMoves {
   reqmoves_state :: State state
   } deriving (Eq, Show)
-$(deriveJSON messageOptions ''ReqPossibleMoves)             
+$(deriveJSON messageOptions ''ReqPossibleMoves)
 
-data ResPossibleMoves move = ResPossibleMoves {
-  resmoves_moves :: [move]
+data MoveAndBoard state move = MoveAndBoard {
+  mnb_board :: state,
+  mnb_move  :: move
+  } deriving (Eq, Show)
+$(deriveJSON messageOptions '' MoveAndBoard)             
+
+data ResPossibleMoves state move = ResPossibleMoves {
+  resmoves_moves :: [MoveAndBoard state move]
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''ResPossibleMoves)
 
 data CenterTree state move
   = CT_TURN (ReqTurn state move)
-  | CT_POSSIBLE_MOVES (ResPossibleMoves move)
+  | CT_POSSIBLE_MOVES (ResPossibleMoves state move)
   | CT_DUMMY             -- HACK!!!!!!!!!!
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterTree)
@@ -113,7 +116,7 @@ data CenterLogic state move
 $(deriveJSON taggingOptions ''CenterLogic)
 
 data LogicCenter state move
-  = LC_POSSIBLE_MOVES  (ResPossibleMoves move)
+  = LC_POSSIBLE_MOVES  (ResPossibleMoves state move)
   | LC_EVALUATE_MOVE   (ResEvaluateMove state)
   | LC_GET_START_STATE (State state)
   deriving (Eq, Show)

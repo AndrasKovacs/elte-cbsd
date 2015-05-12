@@ -29,6 +29,8 @@ setupHeuristic startHeu = do
   printf "GAMETREE: accepted heuristic\n"
   pure (heuPort, hHeu)
 
+
+-- specific main
 main ::
      forall state move.
      (FromJSON state, ToJSON state,
@@ -39,9 +41,8 @@ main ::
   -> String                             -- ^ Name of component
   -> [GameType]                         -- ^ Game types
   -> Int                                -- ^ Search timeout
-  -> (Player -> state -> move -> state) -- ^ Update state with move
   -> IO ()
-main getCenterOutPort startHeu searchAlg name gameTypes timeout makeMove = do
+main getCenterOutPort startHeu searchAlg name gameTypes timeout = do
 
   -- Set up heuristic
   (hPortNumber, hHeu) <- setupHeuristic startHeu  
@@ -70,8 +71,8 @@ main getCenterOutPort startHeu searchAlg name gameTypes timeout makeMove = do
       res <- request hCenterOut $ (TC_POSSIBLE_MOVES $
                ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
       case (res :: CenterTree state move) of
-        CT_POSSIBLE_MOVES (ResPossibleMoves moves) -> do
-          pure $ map (\m -> (makeMove player state m, m)) moves
+        CT_POSSIBLE_MOVES (ResPossibleMoves moves) ->
+          pure $ map (\(MoveAndBoard s m) -> (s, m)) moves
         other ->
           error $
             printf "GAMETREE: expected POSSIBLE_MOVES response, got %s\n"

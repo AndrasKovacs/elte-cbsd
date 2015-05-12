@@ -8,6 +8,7 @@
 module CBSD.Ataxx where
 
 import CBSD.Search
+import CBSD.Messages.Types
 
 import Control.Lens hiding ((.=), coerce)
 import Data.Aeson hiding (Result)
@@ -106,8 +107,8 @@ makeMove p s m = fst <$> (find ((==m).snd) $ moves p s)
 publicMakeMove :: Player -> GStateJSON -> MoveJSON -> Maybe GStateJSON
 publicMakeMove = coerce makeMove
 
-publicMoves :: Player -> GStateJSON -> [MoveJSON]
-publicMoves p s = coerce (map snd $ moves p (coerce s))
+publicMoves :: Player -> GStateJSON -> [MoveAndBoard GStateJSON MoveJSON]
+publicMoves p s = coerce (map (uncurry MoveAndBoard) $ moves p (coerce s))
 
 -- Heuristic
 ------------------------------------------------------------

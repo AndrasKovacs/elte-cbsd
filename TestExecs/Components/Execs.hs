@@ -1,4 +1,5 @@
-{-# LANGUAGE ScopedTypeVariables, NoMonomorphismRestriction, LambdaCase #-}
+{-# LANGUAGE
+  ScopedTypeVariables, NoMonomorphismRestriction, LambdaCase, FlexibleContexts #-}
 
 module Execs where
   
@@ -62,11 +63,10 @@ potyogosTree = withSocketsDo $ do
   Tree.main
     (getPortArg specificTreeErr)
     startHeu
-    (orderWith 0 minimax alphaBeta)
+    (orderWith 0 minimax alphaBeta :: Search IO Score Potyogos.GStateJSON Potyogos.MoveJSON)
     "PotyogsTree"
     [Potyogos]
     1000000
-    (mkMove Potyogos.publicMakeMove)    
 
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
@@ -83,11 +83,10 @@ ataxxTree = withSocketsDo $ do
   Tree.main
     (getPortArg specificTreeErr)
     startHeu
-    (orderWith 0 minimax alphaBeta)
+    (orderWith 0 minimax alphaBeta :: Search IO Score Ataxx.GStateJSON Ataxx.MoveJSON)
     "AtaxxTree"
     [Ataxx]
     1000000
-    (mkMove Ataxx.publicMakeMove)
 
 -- potyogosTreeWithHeu :: IO ()
 -- potyogosTreeWithHeu = withSocketsDo $ do
