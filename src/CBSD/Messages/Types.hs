@@ -9,10 +9,12 @@ import Control.Applicative
 import Data.Aeson.TH
 import qualified Data.Text as T
 
+-- POSSIBLE MOVES KORREKCIÓ: [(state, move)] !!!!!
+
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)
 data ComponentType = GAMETREE | GAMELOGIC | GUI deriving (Eq, Show)
-data GameType      = Ataxx | Foxes | Amoeba deriving (Eq, Show)
+data GameType      = Ataxx | Agarak | Potyogos deriving (Eq, Show)
 data ConnectResult = OK | FAILURE deriving (Eq, Show)
 
 $(deriveJSON defaultOptions ''TurnStatus)                      

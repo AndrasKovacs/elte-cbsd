@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, NoMonomorphismRestriction #-}
+{-# LANGUAGE ScopedTypeVariables, NoMonomorphismRestriction, LambdaCase #-}
 
 module Execs where
   
@@ -23,73 +23,90 @@ import Text.Printf
 import System.Environment
 import System.Process
 
+startHeu :: PortNumber -> IO ()
+startHeu port = 
+  getArgs >>= \case
+    _:heuCmd:_ -> do
+      let cmd = heuCmd ++ " " ++ show port
+      printf "GAMETREE: starting heuristic with command: %s\n" cmd
+      spawnCommand cmd
+      pure ()
+    _ -> error specificTreeErr    
+
 mkMove moves p s m  = fromMaybe
    (error $ printf "EVALUATE_MOVE: invalid move: %s\n" (show $ encode m))
    (moves p s m)
 
-startHeu :: PortNumber -> IO ()
-startHeu port = 
-  getArgs >>= \case
-    _:path:_ -> do
-      callProcess path [show port]
-    _ -> error "usage: tree [port number of center] [file path of heuristic]"
-
+logicArgErr     = "usage: logic PORT_OF_CENTER"
+specificTreeErr = "usage: tree PORT_OF_CENTER HEURISTIC_CMD"
+heuArgErr       = "usage: heuristic PORT_OF_GAMETREE"
 
 potyogosHeu :: IO ()
-potyogosHeu = withSocketsDo $ Heu.main getPortArg Potyogos.publicSmarterHeu
+potyogosHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Potyogos.publicSmarterHeu
 
 ataxxHeu :: IO ()
-ataxxHeu = withSocketsDo $ Heu.main getPortArg Ataxx.publicHeu
-
--- tree :: IO ()
--- tree = withSocketsDo $
---   Tree.main
---     getPortArg
---     startHeu
---     (orderWith 0 minimax alphaBeta)
---     "Alpha-beta tree"
---     [Amoeba, Foxes, Ataxx]
---     1000000
-    
+ataxxHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Ataxx.publicHeu    
 
 potyogosLogic :: IO ()
 potyogosLogic = withSocketsDo $
   Logic.main
-    getPortArg
+    (getPortArg logicArgErr)
     Potyogos.publicMoves
     Potyogos.publicStart
     (mkMove Potyogos.publicMakeMove)
     "PotyogosLogic"
-    Amoeba
+    Potyogos
 
-potyogosTreeWithHeu :: IO ()
-potyogosTreeWithHeu = withSocketsDo $ do
+potyogosTree :: IO ()
+potyogosTree = withSocketsDo $ do
   Tree.main
-    getPortArg
-    (\port -> Heu.main (pure port) (Potyogos.publicSmarterHeu))
+    (getPortArg specificTreeErr)
+    startHeu
     (orderWith 0 minimax alphaBeta)
     "PotyogsTree"
-    [Amoeba]
+    [Potyogos]
     1000000
-    (mkMove Potyogos.publicMakeMove)
+    (mkMove Potyogos.publicMakeMove)    
 
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
   Logic.main
-    getPortArg
+    (getPortArg logicArgErr)    
     Ataxx.publicMoves
     Ataxx.publicStart
     (mkMove Ataxx.publicMakeMove)
     "AtaxxLogic"
     Ataxx
 
-ataxxTreeWithHeu :: IO ()
-ataxxTreeWithHeu = withSocketsDo $ do
+ataxxTree :: IO ()
+ataxxTree = withSocketsDo $ do
   Tree.main
-    getPortArg
-    (\port -> Heu.main (pure port) (Ataxx.publicHeu))
+    (getPortArg specificTreeErr)
+    startHeu
     (orderWith 0 minimax alphaBeta)
     "AtaxxTree"
     [Ataxx]
     1000000
     (mkMove Ataxx.publicMakeMove)
+
+-- potyogosTreeWithHeu :: IO ()
+-- potyogosTreeWithHeu = withSocketsDo $ do
+--   Tree.main
+--     (getPortArg specificTreeErr)
+--     (\port -> Heu.main (pure port) (Potyogos.publicSmarterHeu))
+--     (orderWith 0 minimax alphaBeta)
+--     "PotyogsTree"
+--     [Potyogos]
+--     1000000
+--     (mkMove Potyogos.publicMakeMove)    
+
+-- ataxxTreeWithHeu :: IO ()
+-- ataxxTreeWithHeu = withSocketsDo $ do
+--   Tree.main
+--     getPortArg
+--     (\port -> Heu.main (pure port) (Ataxx.publicHeu))
+--     (orderWith 0 minimax alphaBeta)
+--     "AtaxxTree"
+--     [Ataxx]
+--     1000000
+--     (mkMove Ataxx.publicMakeMove)

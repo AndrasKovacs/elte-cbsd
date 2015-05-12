@@ -24,24 +24,24 @@ main ::
   -> IO ()
 main getPort heu = do
   hSetBuffering stdout LineBuffering
-  printf "acquiring game tree port number\n"
+  printf "HEURISTIC: acquiring game tree port number\n"
   port <- getPort
-  printf "acquired port %s\n" (show port)
+  printf "HEURISTIC: acquired port %s\n" (show port)
   
   handle <- fix $ \again -> do
-    printf "trying to connect to game tree at port %s\n" (show port)
+    printf "HEURISTIC: trying to connect to game tree at port %s\n" (show port)
     catch (connectTo "localhost" (PortNumber port))
       (\(_ :: IOException) -> do
-           printf "failed to connect\n"
+           printf "HEURISTIC: failed to connect\n"
            threadDelay 1000000
            again)     
   hSetBuffering handle LineBuffering
-  printf "connected\n"
+  printf "HEURISTIC: connected\n"
   
   forever $ respond handle $ \case
      TH_CLOSE -> do
-       printf "received CLOSE message from game tree\n"
-       printf "closing now\n"
+       printf "HEURISTIC: received CLOSE message from game tree\n"
+       printf "HEURISTIC: closing now\n"
        exitSuccess
      TH_EVAL board player ->
        pure $ Just $ (TH_EVAL_RE (heu board player) :: TreeHeu state)

@@ -7,10 +7,10 @@ import Data.Word
 import Text.Read
 import System.Environment
 
-getPortArg :: IO PortNumber
-getPortArg = getArgs >>= \case
+getPortArg :: String -> IO PortNumber
+getPortArg errMsg = getArgs >>= \case
   port:_ -> maybe
-    (error "expected port number as first argument")
+    (error errMsg)
     (pure . fromIntegral)
     (readMaybe port :: Maybe Word16)
-  _ -> error "expected port number as first argument"
+  _ -> error errMsg

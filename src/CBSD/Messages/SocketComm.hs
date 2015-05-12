@@ -70,33 +70,35 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   -- Get center port number
   printf "getting port number of center\n"
   centerOutPort <- getCenterOutPort
-  printf "acquired port number: %s\n" (show centerOutPort)  
+  printf "%s: acquired port number: %s\n" (show componentType) (show centerOutPort)  
 
   -- Connect to center
   hCenterOut <- fix $ \again -> do
-    printf "trying to connect to center at port %s\n" (show centerOutPort)    
+    printf "%s: trying to connect to center at port %s\n" (show componentType) (show centerOutPort)    
     catch (connectTo "localhost" (PortNumber centerOutPort))
       (\(_ :: IOException) -> do
-           printf "failed to connect\n"
+           printf "%s: failed to connect\n" (show componentType)
            threadDelay 1000000
            again)
   hSetBuffering hCenterOut LineBuffering      
-  printf "connected\n"
+  printf "%s: connected\n" (show componentType)
 
   -- Accept center
   (centerInPort, centerInSock) <- listenOnUnusedPort
-  printf "listening for center on port %s\n" (show centerInPort)
+  printf "%s: listening for center on port %s\n" (show componentType) (show centerInPort)
   
   putMessage hCenterOut (Req_CONNECT $
     ReqConnect gameTypes name componentType (fromIntegral centerInPort))
-  printf "CONNECT request sent to center\n"      
+  printf "%s: CONNECT request sent to center\n" (show componentType)
 
   resConnect <- getMessage hCenterOut
   case resConnect of
     Res_CONNECT (ResConnect res _) -> case res of
       OK      -> pure ()
-      FAILURE -> error "received FAILURE code in CONNECT response from center\n"
-    other -> error $ printf "expected CONNECT response, got %s\n" (show $ encode other)
-  printf "CONNECT response OK\n"
+      FAILURE -> error $
+        printf "%s: received FAILURE code in CONNECT response from center\n" (show componentType)
+    other ->
+      error $ printf "%s expected CONNECT response, got %s\n" (show componentType) (show $ encode other)
+  printf "%s: CONNECT response OK\n" (show componentType)
                                  
   pure (centerInPort, centerInSock, centerOutPort, hCenterOut)    
