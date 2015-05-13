@@ -1,4 +1,7 @@
 
 
-viktor portja: 6456
+POTYOGOS MOVE FORMAT:
+
+to x -ben az adat
+
 
