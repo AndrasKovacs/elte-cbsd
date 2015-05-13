@@ -8,6 +8,7 @@
 module CBSD.Ataxx where
 
 import CBSD.Search
+import CBSD.Messages.Types
 
 import Control.Lens hiding ((.=), coerce)
 import Data.Aeson hiding (Result)
@@ -23,6 +24,8 @@ import qualified Data.Vector.Unboxed as UV
 import qualified Data.Vector.Unboxed.Mutable as MUV
 import qualified Data.Vector as V
 import           Data.Vector.Unboxed.Deriving
+
+
 
 {-
     Position of blocks is hard-wired!!
@@ -80,9 +83,8 @@ doubleN = do
       dn' = [ix | (i', j') <- dn,
              inRange sRange i', inRange sRange j',
              let ix = i' * size + j',
-             notElem ix $ singleN V.! (i * size + j)]                                      
+             notElem ix $ singleN V.! (i * size + j)]  
   pure dn'
-
 
 moves :: Player -> GState -> [(GState, Move)]
 moves p s = singleStep ++ doubleStep where
@@ -103,8 +105,20 @@ moves p s = singleStep ++ doubleStep where
 makeMove :: Player -> GState -> Move -> Maybe GState
 makeMove p s m = fst <$> (find ((==m).snd) $ moves p s)
 
-publicMakeMove :: Player -> GStateJSON -> MoveJSON -> Maybe GStateJSON
-publicMakeMove = coerce makeMove
+makeMove' :: Player -> GState -> Move -> (Maybe GState, TurnStatus)
+makeMove' p s m = case makeMove p s m of
+  Just s -> case result (switch p) s of
+    Draw     -> (Nothing, DRAW)
+    Win PMax -> (Nothing, PLAYER_1_WON)
+    Win PMin -> (Nothing, PLAYER_2_WON)
+    Continue -> (Just s, ONGOING)
+  _ -> (Nothing, DRAW)
+
+-- Returns the game result for the state AFTER evaluating the move!
+publicMakeMove ::
+  Player -> GStateJSON
+  -> MoveJSON -> (Maybe GStateJSON, TurnStatus)
+publicMakeMove p s m = coerce (makeMove' (coerce p) (coerce s) (coerce m))
 
 publicMoves :: Player -> GStateJSON -> [MoveJSON]
 publicMoves p s = coerce (map snd $ moves p (coerce s))

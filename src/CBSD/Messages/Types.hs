@@ -11,7 +11,7 @@ import qualified Data.Text as T
  
 -- POSSIBLE MOVES KORREKCIÓ: [(state, move)] !!!!!
 
-import CBSD.Ataxx
+
 
 
 data TurnStatus    = ONGOING | DRAW | PLAYER_1_WON | PLAYER_2_WON deriving (Eq, Show)

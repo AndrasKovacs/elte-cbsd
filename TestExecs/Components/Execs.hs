@@ -62,26 +62,26 @@ potyogosHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Potyogos.publicSma
 ataxxHeu :: IO ()
 ataxxHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Ataxx.publicHeu    
 
-potyogosLogic :: IO ()
-potyogosLogic = withSocketsDo $
-  Logic.main
-    (getPortArg logicArgErr)
-    Potyogos.publicMoves
-    Potyogos.publicStart
-    (mkMove Potyogos.publicMakeMove)
-    "PotyogosLogic"
-    Potyogos
+-- potyogosLogic :: IO ()
+-- potyogosLogic = withSocketsDo $
+--   Logic.main
+--     (getPortArg logicArgErr)
+--     Potyogos.publicMoves
+--     Potyogos.publicStart
+--     (mkMove Potyogos.publicMakeMove)
+--     "PotyogosLogic"
+--     Potyogos
  
-potyogosTree :: IO ()
-potyogosTree = withSocketsDo $ do
-  Tree.main
-    (getPortArg specificTreeErr)
-    startHeu
-    (orderWith 0 minimax alphaBeta)
-    "PotyogsTree"
-    [Potyogos]
-    1000000
-    (mkMove Potyogos.publicMakeMove)    
+-- potyogosTree :: IO ()
+-- potyogosTree = withSocketsDo $ do
+--   Tree.main
+--     (getPortArg specificTreeErr)
+--     startHeu
+--     (orderWith 0 minimax alphaBeta)
+--     "PotyogsTree"
+--     [Potyogos]
+--     1000000
+--     (mkMove Potyogos.publicMakeMove)    
 
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
@@ -89,20 +89,20 @@ ataxxLogic = withSocketsDo $ do
     (getPortArg specificTreeErr)
     Ataxx.publicMoves
     Ataxx.publicStart
-    (mkMove Ataxx.publicMakeMove)
+    Ataxx.publicMakeMove
     "AtaxxLogic"
     Ataxx
 
-ataxxTree :: IO ()
-ataxxTree = withSocketsDo $ do
-  Tree.main
-    (getPortArg logicArgErr)
-    startHeu
-    (orderWith 0 minimax alphaBeta)
-    "AtaxxTree"
-    [Ataxx]
-    1000000
-    (mkMove Ataxx.publicMakeMove)
+-- ataxxTree :: IO ()
+-- ataxxTree = withSocketsDo $ do
+--   Tree.main
+--     (getPortArg logicArgErr)
+--     startHeu
+--     (orderWith 0 minimax alphaBeta)
+--     "AtaxxTree"
+--     [Ataxx]
+--     1000000
+--     (mkMove Ataxx.publicMakeMove)
 
 -- potyogosTreeWithHeu :: IO ()
 -- potyogosTreeWithHeu = withSocketsDo $ do
@@ -115,13 +115,13 @@ ataxxTree = withSocketsDo $ do
 --     1000000
 --     (mkMove Potyogos.publicMakeMove)    
 
-ataxxTreeWithHeu :: IO ()
-ataxxTreeWithHeu = withSocketsDo $ do
-  Tree.main
-    (pure 1234)
-    (\port -> Heu.main (pure port) (Ataxx.publicHeu))
-    (orderWith 0 minimax alphaBeta)
-    "AtaxxTree"
-    [Ataxx]
-    1000000
-    (mkMove Ataxx.publicMakeMove)
+-- ataxxTreeWithHeu :: IO ()
+-- ataxxTreeWithHeu = withSocketsDo $ do
+--   Tree.main
+--     (pure 1234)
+--     (\port -> Heu.main (pure port) (Ataxx.publicHeu))
+--     (orderWith 0 minimax alphaBeta)
+--     "AtaxxTree"
+--     [Ataxx]
+--     1000000
+--     (mkMove Ataxx.publicMakeMove)
