@@ -125,11 +125,16 @@ data CenterLogic state move
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''CenterLogic)
 
+data StateWrap state = StateWrap {
+  wrap_state :: State state
+  } deriving (Eq, Show)
+$(deriveJSON messageOptions ''StateWrap)
+
 data LogicCenter state move
   = LC_POSSIBLE_MOVES  (ResPossibleMoves move)
   | LC_EVALUATE_MOVE   (ResEvaluateMove state)
-  | LC_GET_START_STATE {
-    lc_state :: State state }
+  | LC_GET_START_STATE (StateWrap state)
+
     
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''LogicCenter)

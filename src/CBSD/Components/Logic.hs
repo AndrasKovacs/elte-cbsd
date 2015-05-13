@@ -43,7 +43,7 @@ main getCenterOutPort moves startState makeMove name gameType = do
       
         (CL_GET_START_STATE :: CenterLogic state move) -> do
           printf "LOGIC: received GET_START_STATE\n"
-          let resp = LC_GET_START_STATE $ State 0 ONGOING startState PMax
+          let resp = LC_GET_START_STATE $ StateWrap $ State 0 ONGOING startState PMax
           printf "Sending response: %s\n" (show $ encode resp)
           pure $ Just $ resp
         
