@@ -39,7 +39,7 @@ main getCenterOutPort moves startState makeMove name gameType = do
     respond hCenterIn $ \(msg :: CenterLogic state move) -> do
       case msg of      
         (CL_GET_START_STATE :: CenterLogic state move) ->
-          pure $ Just $ LC_GET_START_STATE $
+          pure $ Just $ LC_GET_START_STATE $ StateWrap $
             State 0 ONGOING startState PMax
         
         CL_EVALUATE_MOVE (ReqEvaluateMove strec move) -> do

@@ -64,6 +64,11 @@ data State state = State {
   } deriving (Eq, Show)
 $(deriveJSON messageOptions ''State)
 
+data StateWrap state = StateWrap {
+  wrap_state :: State state
+  } deriving (Eq, Show)
+$(deriveJSON messageOptions ''StateWrap)
+
 data ReqTurn state move = ReqTurn {
   reqt_gameId :: Int,
   reqt_state  :: State state,
@@ -129,7 +134,7 @@ $(deriveJSON taggingOptions ''CenterLogic)
 data LogicCenter state move
   = LC_POSSIBLE_MOVES  (ResPossibleMoves state move)
   | LC_EVALUATE_MOVE   (ResEvaluateMove state)
-  | LC_GET_START_STATE (State state)
+  | LC_GET_START_STATE (StateWrap state)
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''LogicCenter)
 
