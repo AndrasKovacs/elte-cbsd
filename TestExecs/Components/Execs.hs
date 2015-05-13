@@ -56,7 +56,7 @@ potyogosLogic = withSocketsDo $
     (mkMove Potyogos.publicMakeMove)
     "PotyogosLogic"
     Potyogos
-
+ 
 potyogosTree :: IO ()
 potyogosTree = withSocketsDo $ do
   Tree.main
@@ -71,7 +71,7 @@ potyogosTree = withSocketsDo $ do
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
   Logic.main
-    (getPortArg logicArgErr)    
+    (pure 1234)
     Ataxx.publicMoves
     Ataxx.publicStart
     (mkMove Ataxx.publicMakeMove)

@@ -29,8 +29,9 @@ library
   other-extensions: 
     TemplateHaskell
     
-  build-depends:       
-                         aeson >= 0.8.0.2
+  build-depends:
+                         stringsearch
+                       , aeson >= 0.8.0.2
                        , process >= 1.2.3
                        , array >=0.5 && <0.6
                        , async >= 2
