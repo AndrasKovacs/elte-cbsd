@@ -23,21 +23,6 @@ import Text.Printf
 import System.Environment
 import System.Process
 
-
-{- HIBÁK
-1.
-ember-ember Ataxx-logic EVALUATE_MOVE: center:
-   "unrecognized field: STATUS" --> pedig benne van a doksiban...
-
-2.
-ember-gép Ataxx-logic Ataxx-Tree-With-Heu:
-   GUI null exceptionnel meghal
-
--}
-
-
-
-
 startHeu :: PortNumber -> IO ()
 startHeu port = 
   getArgs >>= \case
@@ -62,26 +47,26 @@ potyogosHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Potyogos.publicSma
 ataxxHeu :: IO ()
 ataxxHeu = withSocketsDo $ Heu.main (getPortArg heuArgErr) Ataxx.publicHeu    
 
--- potyogosLogic :: IO ()
--- potyogosLogic = withSocketsDo $
---   Logic.main
---     (getPortArg logicArgErr)
---     Potyogos.publicMoves
---     Potyogos.publicStart
---     (mkMove Potyogos.publicMakeMove)
---     "PotyogosLogic"
---     Potyogos
+potyogosLogic :: IO ()
+potyogosLogic = withSocketsDo $
+  Logic.main
+    (getPortArg logicArgErr)
+    Potyogos.publicMoves
+    Potyogos.publicStart
+    Potyogos.publicMakeMove
+    "PotyogosLogic"
+    Potyogos
  
--- potyogosTree :: IO ()
--- potyogosTree = withSocketsDo $ do
---   Tree.main
---     (getPortArg specificTreeErr)
---     startHeu
---     (orderWith 0 minimax alphaBeta)
---     "PotyogsTree"
---     [Potyogos]
---     1000000
---     (mkMove Potyogos.publicMakeMove)    
+potyogosTree :: IO ()
+potyogosTree = withSocketsDo $ do
+  Tree.main
+    (getPortArg specificTreeErr)
+    startHeu
+    (orderWith 0 minimax alphaBeta)
+    "PotyogsTree"
+    [Potyogos]
+    1000000
+    Potyogos.publicMakeMove
 
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
@@ -93,16 +78,16 @@ ataxxLogic = withSocketsDo $ do
     "AtaxxLogic"
     Ataxx
 
--- ataxxTree :: IO ()
--- ataxxTree = withSocketsDo $ do
---   Tree.main
---     (getPortArg logicArgErr)
---     startHeu
---     (orderWith 0 minimax alphaBeta)
---     "AtaxxTree"
---     [Ataxx]
---     1000000
---     (mkMove Ataxx.publicMakeMove)
+ataxxTree :: IO ()
+ataxxTree = withSocketsDo $ do
+  Tree.main
+    (getPortArg logicArgErr)
+    startHeu
+    (orderWith 0 minimax alphaBeta)
+    "AtaxxTree"
+    [Ataxx]
+    1000000
+    Ataxx.publicMakeMove
 
 -- potyogosTreeWithHeu :: IO ()
 -- potyogosTreeWithHeu = withSocketsDo $ do

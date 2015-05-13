@@ -161,6 +161,7 @@ intToP = withScientific "" $ \case
   2 -> pure PMin
   _ -> empty
 
+
 instance (ToJSON state) => ToJSON (TreeHeu state) where
   toJSON TH_CLOSE =
     object [

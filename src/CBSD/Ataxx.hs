@@ -25,8 +25,6 @@ import qualified Data.Vector.Unboxed.Mutable as MUV
 import qualified Data.Vector as V
 import           Data.Vector.Unboxed.Deriving
 
-
-
 {-
     Position of blocks is hard-wired!!
     Also, We disallow blocks when converting to/from JSON!

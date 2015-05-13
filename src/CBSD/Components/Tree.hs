@@ -17,6 +17,7 @@ import Data.List.Split
 import System.Environment
 import Text.Read
 import Data.Word
+import Data.Maybe
 
 setupHeuristic :: (PortNumber -> IO ()) -> IO (PortNumber, Handle)
 setupHeuristic startHeu = do
@@ -33,13 +34,13 @@ main ::
      forall state move.
      (FromJSON state, ToJSON state,
       FromJSON move, ToJSON move)
-  => IO PortNumber                      -- ^ Port of central component
-  -> (PortNumber -> IO ())              -- ^ Start heuristic 
-  -> Search IO Score state move         -- ^ Search algorithm
-  -> String                             -- ^ Name of component
-  -> [GameType]                         -- ^ Game types
-  -> Int                                -- ^ Search timeout
-  -> (Player -> state -> move -> state) -- ^ Update state with move
+  => IO PortNumber                  -- ^ Port of central component
+  -> (PortNumber -> IO ())          -- ^ Start heuristic 
+  -> Search IO Score state move     -- ^ Search algorithm
+  -> String                         -- ^ Name of component
+  -> [GameType]                     -- ^ Game types
+  -> Int                            -- ^ Search timeout
+  -> (Player -> state -> move -> (Maybe state, TurnStatus)) -- ^ Update state with move
   -> IO ()
 main getCenterOutPort startHeu searchAlg name gameTypes timeout makeMove = do
 
@@ -71,7 +72,7 @@ main getCenterOutPort startHeu searchAlg name gameTypes timeout makeMove = do
                ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
       case (res :: CenterTree state move) of
         CT_POSSIBLE_MOVES (ResPossibleMoves moves) -> do
-          pure $ map (\m -> (makeMove player state m, m)) moves
+          pure $ map (\m -> (fromJust $ fst $ makeMove player state m, m)) moves
         other ->
           error $
             printf "GAMETREE: expected POSSIBLE_MOVES response, got %s\n"

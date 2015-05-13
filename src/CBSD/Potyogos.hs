@@ -5,6 +5,7 @@
 module CBSD.Potyogos where
 
 import CBSD.Search
+import CBSD.Messages.Types
 
 import Control.Applicative
 import Control.Lens hiding ((.=), coerce)
@@ -86,8 +87,19 @@ moves p s = case result s of
   Continue -> [(s // [(ix, Filled p)], snd ix) | Just ix <- map (indexOfDrop s) colIxs]
   _        -> []
 
-publicMakeMove :: Player -> GStateJSON -> MoveJSON -> Maybe GStateJSON
-publicMakeMove = coerce makeMove
+makeMove' :: Player -> GState -> Move -> (Maybe GState, TurnStatus)
+makeMove' p s m = case makeMove p s m of
+  Just s -> case result s of
+    Win PMax -> (Nothing, PLAYER_1_WON)
+    Win PMin -> (Nothing, PLAYER_2_WON)
+    Draw     -> (Nothing, DRAW)
+    Continue -> (Just s, ONGOING)
+  _ -> (Nothing, DRAW)
+
+publicMakeMove ::
+  Player -> GStateJSON
+  -> MoveJSON -> (Maybe GStateJSON, TurnStatus)
+publicMakeMove  p s m = coerce (makeMove' p (coerce s) (coerce m))
 
 publicMoves :: Player -> GStateJSON -> [MoveJSON]
 publicMoves p s = coerce (map snd $ moves p (coerce s))
