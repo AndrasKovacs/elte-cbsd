@@ -144,13 +144,14 @@ publicSmarterHeu = coerce (\s (_ :: Player) -> smarterHeu s)
 newtype MoveJSON = MoveJSON Move deriving (Eq, Show)
 
 instance ToJSON MoveJSON where
-  toJSON (MoveJSON move) = object ["column" .= move]
+  toJSON (MoveJSON col) = object
+    ["from" .= object ["y" .= (0 :: Int), "x" .= (0 :: Int)],
+     "to"   .= object ["y" .= (0 :: Int), "x" .= (col :: Int)]]
 
 instance FromJSON MoveJSON where
   parseJSON = withObject "" $ \obj -> do
-    col <- obj .: "column"
-    guard $ inRange (0, cols-1) col
-    pure $ MoveJSON col
+    to <- obj .: "to"
+    MoveJSON <$> (to .: "x")
 
 instance ToJSON Cell where
   toJSON Empty         = Number 0
