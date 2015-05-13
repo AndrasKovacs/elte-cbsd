@@ -39,14 +39,19 @@ main getCenterOutPort moves startState makeMove name gameType = do
     respond hCenterIn $ \(msg :: CenterLogic state move) -> do
       case msg of
       
-        (CL_GET_START_STATE :: CenterLogic state move) ->
-          pure $ Just $ LC_GET_START_STATE $
-            State 0 ONGOING startState PMax
+        (CL_GET_START_STATE :: CenterLogic state move) -> do
+          printf "LOGIC: received GET_START_STATE\n"
+          let resp = LC_GET_START_STATE $ State 0 ONGOING startState PMax
+          printf "Sending response: %s\n" (show $ encode resp)
+          pure $ Just $ resp
         
         CL_EVALUATE_MOVE (ReqEvaluateMove strec move) -> do
           let State id status state player = strec
-          pure $ Just $ LC_EVALUATE_MOVE $ ResEvaluateMove $
-            State id status (makeMove player state move) (switch player)
+          printf "LOGIC: received EVALUATE_MOVE\n"
+          let resp = LC_EVALUATE_MOVE $ ResEvaluateMove $
+               State id status (makeMove player state move) (switch player)
+          printf "Sending response: %s\n" (show $ encode resp)                       
+          pure $ Just resp
         
         CL_POSSIBLE_MOVES (ReqPossibleMoves (State _ _ state player)) -> do
           pure $ Just $ LC_POSSIBLE_MOVES $ ResPossibleMoves (moves player state)

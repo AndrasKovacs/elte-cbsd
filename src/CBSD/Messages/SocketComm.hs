@@ -1,6 +1,6 @@
 {-# LANGUAGE
   ScopedTypeVariables, TupleSections, LambdaCase,
-  RankNTypes, ScopedTypeVariables #-}
+  RankNTypes, ScopedTypeVariables, OverloadedStrings #-}
 
 module CBSD.Messages.SocketComm where
 import CBSD.Messages.Types
@@ -12,34 +12,35 @@ import Control.Concurrent
 import Data.Function
 import Data.Aeson
 import Text.Printf
+import Data.ByteString.Search
 
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as CB
+import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Lazy.Char8 as LB
+
  
 -- | Try grabbing ports until there's a unused one.
 listenOnUnusedPort :: IO (PortNumber, Socket)
 listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
   catch ((port,) <$> listenOn (PortNumber port))
-        (\(_ :: IOException) -> go (port + 1))
+        (\(_ :: IOException) -> go (port + 1))  
 
-------------------------------------------------------------  
+------------------------------------------------------------
 
 -- | Try reading until the handle becomes non-empty
 getMessage :: forall a. FromJSON a => Handle -> IO a
 getMessage handle = do
   line <- B.hGetLine handle
---  printf "getMessage: %s\n" (show line)
+  let line' = replace "\"content\":{}" ("\"content\":[]"::B.ByteString) line
   maybe
     (error $ printf "received invalid message: %s\n" (show line))
     pure
-    (decodeStrict line)
+    (decode line')
 
 putMessage :: ToJSON a => Handle -> a -> IO ()
 putMessage handle a = do
-  let line = encode a
---  printf "putMessage: %s\n" (show line)
-  CB.hPutStrLn handle $ LB.toStrict line
+  let line  = encode a
+      line' = replace "\"content\":[]" ("\"content\":{}"::B.ByteString)(LB.toStrict line)
+  LB.hPutStrLn handle line'
   
 -- | Send request, then get response
 request :: (ToJSON a, FromJSON b) => Handle -> a -> IO b
