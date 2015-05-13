@@ -54,19 +54,20 @@ potyogosLogic = withSocketsDo $
     (getPortArg logicArgErr)
     Potyogos.publicMoves
     Potyogos.publicStart
-    (mkMove Potyogos.publicMakeMove)
+    Potyogos.publicMakeMove
     "PotyogosLogic"
     Potyogos
 
-potyogosTree :: IO ()
-potyogosTree = withSocketsDo $ do
-  Tree.main
-    (getPortArg specificTreeErr)
-    startHeu
-    (orderWith 0 minimax alphaBeta :: Search IO Score Potyogos.GStateJSON Potyogos.MoveJSON)
-    "PotyogsTree"
-    [Potyogos]
-    1000000
+-- potyogosTree :: IO ()
+-- potyogosTree = withSocketsDo $ do
+--   Tree.main
+--     (getPortArg specificTreeErr)
+--     startHeu
+--     (orderWith 0 minimax alphaBeta :: Search IO Score Potyogos.GStateJSON Potyogos.MoveJSON)
+--     "PotyogsTree"
+--     [Potyogos]
+--     1000000
+
 
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
@@ -74,19 +75,19 @@ ataxxLogic = withSocketsDo $ do
     (getPortArg logicArgErr)    
     Ataxx.publicMoves
     Ataxx.publicStart
-    (mkMove Ataxx.publicMakeMove)
+    Ataxx.publicMakeMove
     "AtaxxLogic"
     Ataxx
 
-ataxxTree :: IO ()
-ataxxTree = withSocketsDo $ do
-  Tree.main
-    (getPortArg specificTreeErr)
-    startHeu
-    (orderWith 0 minimax alphaBeta :: Search IO Score Ataxx.GStateJSON Ataxx.MoveJSON)
-    "AtaxxTree"
-    [Ataxx]
-    1000000
+-- ataxxTree :: IO ()
+-- ataxxTree = withSocketsDo $ do
+--   Tree.main
+--     (getPortArg specificTreeErr)
+--     startHeu
+--     (orderWith 0 minimax alphaBeta :: Search IO Score Ataxx.GStateJSON Ataxx.MoveJSON)
+--     "AtaxxTree"
+--     [Ataxx]
+--     1000000
 
 alphaBetaTree :: IO ()
 alphaBetaTree = withSocketsDo $ do

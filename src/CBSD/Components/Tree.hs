@@ -27,73 +27,73 @@ import qualified Data.ByteString as B
 
 -- NOTE: AGARAK and ATTAX have exactly the same message formats!
 
--- specific main
-main ::
-     forall state move.
-     (FromJSON state, ToJSON state,
-      FromJSON move, ToJSON move)
-  => IO PortNumber                      -- ^ Port of central component
-  -> (PortNumber -> IO ())              -- ^ Start heuristic 
-  -> Search IO Score state move         -- ^ Search algorithm
-  -> String                             -- ^ Name of component
-  -> [GameType]                         -- ^ Game types
-  -> Int                                -- ^ Search timeout
-  -> IO ()
-main getCenterOutPort startHeu searchAlg name gameTypes timeout = do
+-- -- specific main
+-- main ::
+--      forall state move.
+--      (FromJSON state, ToJSON state,
+--       FromJSON move, ToJSON move)
+--   => IO PortNumber                      -- ^ Port of central component
+--   -> (PortNumber -> IO ())              -- ^ Start heuristic 
+--   -> Search IO Score state move         -- ^ Search algorithm
+--   -> String                             -- ^ Name of component
+--   -> [GameType]                         -- ^ Game types
+--   -> Int                                -- ^ Search timeout
+--   -> IO ()
+-- main getCenterOutPort startHeu searchAlg name gameTypes timeout = do
 
-  -- Set up heuristic
-  (hPortNumber, hHeu) <- do
-    (heuPort, heuSock) <- listenOnUnusedPort
-    printf "GAMETREE: starting heuristic\n"
-    startHeu heuPort
-    printf "GAMETREE: listening for heuristic on port %s\n" (show heuPort)
-    (hHeu, _, _) <- accept heuSock
-    hSetBuffering hHeu LineBuffering
-    printf "GAMETREE: accepted heuristic\n"
-    pure (heuPort, hHeu)          
+--   -- Set up heuristic
+--   (hPortNumber, hHeu) <- do
+--     (heuPort, heuSock) <- listenOnUnusedPort
+--     printf "GAMETREE: starting heuristic\n"
+--     startHeu heuPort
+--     printf "GAMETREE: listening for heuristic on port %s\n" (show heuPort)
+--     (hHeu, _, _) <- accept heuSock
+--     hSetBuffering hHeu LineBuffering
+--     printf "GAMETREE: accepted heuristic\n"
+--     pure (heuPort, hHeu)          
   
-  -- Register at center
-  (portCenterIn, centerInSock, portCenterOut, hCenterOut) <-
-    registerAtCenter
-      getCenterOutPort
-      name
-      gameTypes
-      GAMETREE
+--   -- Register at center
+--   (portCenterIn, centerInSock, portCenterOut, hCenterOut) <-
+--     registerAtCenter
+--       getCenterOutPort
+--       name
+--       gameTypes
+--       GAMETREE
 
-  -- Set up search
-  let
-    heu :: state -> Player -> IO Score
-    heu state player = do
-      request hHeu (TH_EVAL state player :: TreeHeu state) >>= \case
-        (TH_EVAL_RE score :: TreeHeu state) -> pure $ Score score
-        other -> 
-          error $
-            printf "GAMETREE: expected EVAL_RE message, got %s\n"
-              (show $ encode other)
+--   -- Set up search
+--   let
+--     heu :: state -> Player -> IO Score
+--     heu state player = do
+--       request hHeu (TH_EVAL state player :: TreeHeu state) >>= \case
+--         (TH_EVAL_RE score :: TreeHeu state) -> pure $ Score score
+--         other -> 
+--           error $
+--             printf "GAMETREE: expected EVAL_RE message, got %s\n"
+--               (show $ encode other)
 
-    moves :: Player -> state -> IO [(state, move)]
-    moves player state = do
-      res <- request hCenterOut $ (TC_POSSIBLE_MOVES $
-               ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
-      case (res :: CenterTree state move) of
-        CT_POSSIBLE_MOVES (ResPossibleMoves moves) ->
-          pure $ map (\(MoveAndBoard s m) -> (s, m)) moves
-        other ->
-          error $
-            printf "GAMETREE: expected POSSIBLE_MOVES response, got %s\n"
-              (show $ encode other)
+--     moves :: Player -> state -> IO [(state, move)]
+--     moves player state = do
+--       res <- request hCenterOut $ (TC_POSSIBLE_MOVES $
+--                ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
+--       case (res :: CenterTree state move) of
+--         CT_POSSIBLE_MOVES (ResPossibleMoves moves) ->
+--           pure $ map (\(MoveAndBoard s m) -> (s, m)) moves
+--         other ->
+--           error $
+--             printf "GAMETREE: expected POSSIBLE_MOVES response, got %s\n"
+--               (show $ encode other)
 
-    search :: Player -> state -> IO (Maybe move)
-    search = nextMove True moves heu searchAlg timeout maxBound    
+--     search :: Player -> state -> IO (Maybe move)
+--     search = nextMove True moves heu searchAlg timeout maxBound    
 
-  -- Main loop
-  forever $ do
-    (hCenterIn, _, _) <- accept centerInSock
-    respond hCenterIn $ \case    
-      (CT_TURN (ReqTurn gameId (State _ _ state player) _ _) :: CenterTree state move) -> do
-        Just move <- search player state
-        pure $ Just $ (TC_TURN $ ResTurn gameId move :: TreeCenter state move)
-    hClose hCenterIn
+--   -- Main loop
+--   forever $ do
+--     (hCenterIn, _, _) <- accept centerInSock
+--     respond hCenterIn $ \case    
+--       (CT_TURN (ReqTurn gameId (State _ _ state player) _ _) :: CenterTree state move) -> do
+--         Just move <- search player state
+--         pure $ Just $ (TC_TURN $ ResTurn gameId move :: TreeCenter state move)
+--     hClose hCenterIn
     
 
 

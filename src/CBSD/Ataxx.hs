@@ -104,11 +104,22 @@ moves p s = singleStep ++ doubleStep where
 makeMove :: Player -> GState -> Move -> Maybe GState
 makeMove p s m = fst <$> (find ((==m).snd) $ moves p s)
 
-publicMakeMove :: Player -> GStateJSON -> MoveJSON -> Maybe GStateJSON
-publicMakeMove = coerce makeMove
+makeMove' :: Player -> GState -> Move -> (Maybe GState, TurnStatus)
+makeMove' p s m = case makeMove p s m of
+  Just s -> case result (switch p) s of
+    Draw     -> (Nothing, DRAW)
+    Win PMax -> (Nothing, PLAYER_1_WON)
+    Win PMin -> (Nothing, PLAYER_2_WON)
+    Continue -> (Just s, ONGOING)
+  _ -> (Nothing, DRAW)
+
+publicMakeMove ::
+  Player -> GStateJSON -> MoveJSON -> (Maybe GStateJSON, TurnStatus)
+publicMakeMove p s m = coerce (makeMove' p (coerce s) (coerce m))    
 
 publicMoves :: Player -> GStateJSON -> [MoveAndBoard GStateJSON MoveJSON]
 publicMoves p s = coerce (map (uncurry MoveAndBoard) $ moves p (coerce s))
+
 
 -- Heuristic
 ------------------------------------------------------------
