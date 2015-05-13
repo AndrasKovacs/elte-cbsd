@@ -23,6 +23,21 @@ import Text.Printf
 import System.Environment
 import System.Process
 
+
+{- HIBÁK
+1.
+ember-ember Ataxx-logic EVALUATE_MOVE: center:
+   "unrecognized field: STATUS" --> pedig benne van a doksiban...
+
+2.
+ember-gép Ataxx-logic Ataxx-Tree-With-Heu:
+   GUI null exceptionnel meghal
+
+-}
+
+
+
+
 startHeu :: PortNumber -> IO ()
 startHeu port = 
   getArgs >>= \case
@@ -71,7 +86,7 @@ potyogosTree = withSocketsDo $ do
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
   Logic.main
-    (pure 1234)
+    (getPortArg specificTreeErr)
     Ataxx.publicMoves
     Ataxx.publicStart
     (mkMove Ataxx.publicMakeMove)
@@ -81,7 +96,7 @@ ataxxLogic = withSocketsDo $ do
 ataxxTree :: IO ()
 ataxxTree = withSocketsDo $ do
   Tree.main
-    (getPortArg specificTreeErr)
+    (getPortArg logicArgErr)
     startHeu
     (orderWith 0 minimax alphaBeta)
     "AtaxxTree"
@@ -100,13 +115,13 @@ ataxxTree = withSocketsDo $ do
 --     1000000
 --     (mkMove Potyogos.publicMakeMove)    
 
--- ataxxTreeWithHeu :: IO ()
--- ataxxTreeWithHeu = withSocketsDo $ do
---   Tree.main
---     getPortArg
---     (\port -> Heu.main (pure port) (Ataxx.publicHeu))
---     (orderWith 0 minimax alphaBeta)
---     "AtaxxTree"
---     [Ataxx]
---     1000000
---     (mkMove Ataxx.publicMakeMove)
+ataxxTreeWithHeu :: IO ()
+ataxxTreeWithHeu = withSocketsDo $ do
+  Tree.main
+    (pure 1234)
+    (\port -> Heu.main (pure port) (Ataxx.publicHeu))
+    (orderWith 0 minimax alphaBeta)
+    "AtaxxTree"
+    [Ataxx]
+    1000000
+    (mkMove Ataxx.publicMakeMove)

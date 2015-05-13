@@ -78,19 +78,19 @@ executable ataxx-tree
                 , network
                 , process
 
-executable potyogos-tree
+-- executable potyogos-tree
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs/Components
-  main-is: PotyogosTree.hs
-  other-modules: Execs
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs/Components
+--   main-is: PotyogosTree.hs
+--   other-modules: Execs
   
-  build-depends:
-                  aeson
-                , base >= 4.7 && <4.9
-                , elte-cbsd-games
-                , network
-                , process                               
+--   build-depends:
+--                   aeson
+--                 , base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , process                               
 
 executable ataxx-heu
            
@@ -106,35 +106,35 @@ executable ataxx-heu
                 , network
                 , process
 
-executable potyogos-heu
+-- executable potyogos-heu
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs/Components
-  main-is: PotyogosHeu.hs
-  other-modules: Execs
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs/Components
+--   main-is: PotyogosHeu.hs
+--   other-modules: Execs
    
   
-  build-depends:
-                  aeson
-                , base >= 4.7 && <4.9
-                , elte-cbsd-games
-                , network
-                , process
+--   build-depends:
+--                   aeson
+--                 , base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , process
 
-executable potyogos-logic
+-- executable potyogos-logic
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs/Components
-  main-is: PotyogosLogic.hs
-  other-modules: Execs
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs/Components
+--   main-is: PotyogosLogic.hs
+--   other-modules: Execs
    
   
-  build-depends:
-                  aeson
-                , base >= 4.7 && <4.9
-                , elte-cbsd-games
-                , network
-                , process
+--   build-depends:
+--                   aeson
+--                 , base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , process
 
 -- executable potyogos-tree-with-heu
            
@@ -167,33 +167,31 @@ executable ataxx-logic
 
 
 
-
                 
-                
-executable ataxx
+-- executable ataxx
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs
-  main-is: Games/Ataxx.hs
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs
+--   main-is: Games/Ataxx.hs
    
   
-  build-depends:
-                  base >= 4.7 && <4.9
-                , elte-cbsd-games
-                , network
-                , split
-                , vector
+--   build-depends:
+--                   base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , split
+--                 , vector
 
-executable potyogos
+-- executable potyogos
            
-  default-language: Haskell2010           
-  hs-source-dirs: TestExecs
-  main-is: Games/Potyogos.hs
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs
+--   main-is: Games/Potyogos.hs
    
   
-  build-depends:
-                  array
-                , base >= 4.7 && <4.9
-                , elte-cbsd-games
-                , network
-                , split
+--   build-depends:
+--                   array
+--                 , base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network
+--                 , split

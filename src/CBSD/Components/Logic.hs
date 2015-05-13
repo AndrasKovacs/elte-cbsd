@@ -1,5 +1,7 @@
 
-{-# LANGUAGE LambdaCase, RankNTypes, ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE
+  LambdaCase, RankNTypes, ScopedTypeVariables,
+  FlexibleContexts, MonoLocalBinds #-}
 
 module CBSD.Components.Logic where
 

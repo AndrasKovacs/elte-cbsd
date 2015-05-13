@@ -8,7 +8,7 @@ import Data.Aeson.Types
 import Control.Applicative
 import Data.Aeson.TH
 import qualified Data.Text as T
-
+ 
 -- POSSIBLE MOVES KORREKCIÓ: [(state, move)] !!!!!
 
 import CBSD.Ataxx
@@ -128,7 +128,9 @@ $(deriveJSON taggingOptions ''CenterLogic)
 data LogicCenter state move
   = LC_POSSIBLE_MOVES  (ResPossibleMoves move)
   | LC_EVALUATE_MOVE   (ResEvaluateMove state)
-  | LC_GET_START_STATE (State state)
+  | LC_GET_START_STATE {
+    lc_state :: State state }
+    
   deriving (Eq, Show)
 $(deriveJSON taggingOptions ''LogicCenter)
 
