@@ -58,17 +58,6 @@ potyogosLogic = withSocketsDo $
     "PotyogosLogic"
     Potyogos
 
--- potyogosTree :: IO ()
--- potyogosTree = withSocketsDo $ do
---   Tree.main
---     (getPortArg specificTreeErr)
---     startHeu
---     (orderWith 0 minimax alphaBeta :: Search IO Score Potyogos.GStateJSON Potyogos.MoveJSON)
---     "PotyogsTree"
---     [Potyogos]
---     1000000
-
-
 ataxxLogic :: IO ()
 ataxxLogic = withSocketsDo $ do
   Logic.main
@@ -78,6 +67,11 @@ ataxxLogic = withSocketsDo $ do
     Ataxx.publicMakeMove
     "AtaxxLogic"
     Ataxx
+
+alphaBetaTree :: IO ()
+alphaBetaTree = withSocketsDo $ do
+  Tree.genericMain (orderWith 0 minimax alphaBeta) "AlphaBetaTree" 1000000    
+
 
 -- ataxxTree :: IO ()
 -- ataxxTree = withSocketsDo $ do
@@ -89,10 +83,6 @@ ataxxLogic = withSocketsDo $ do
 --     [Ataxx]
 --     1000000
 
-alphaBetaTree :: IO ()
-alphaBetaTree = withSocketsDo $ do
-  Tree.genericMain (orderWith 0 minimax alphaBeta) "AlphaBetaTree" 1000000
-  
 -- potyogosTreeWithHeu :: IO ()
 -- potyogosTreeWithHeu = withSocketsDo $ do
 --   Tree.main
@@ -114,3 +104,13 @@ alphaBetaTree = withSocketsDo $ do
 --     [Ataxx]
 --     1000000
 --     (mkMove Ataxx.publicMakeMove)
+
+-- potyogosTree :: IO ()
+-- potyogosTree = withSocketsDo $ do
+--   Tree.main
+--     (getPortArg specificTreeErr)
+--     startHeu
+--     (orderWith 0 minimax alphaBeta :: Search IO Score Potyogos.GStateJSON Potyogos.MoveJSON)
+--     "PotyogsTree"
+--     [Potyogos]
+--     1000000
