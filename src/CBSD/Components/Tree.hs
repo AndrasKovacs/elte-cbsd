@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase, RankNTypes, ScopedTypeVariables, FlexibleContexts, OverloadedStrings #-}
 
 module CBSD.Components.Tree where
@@ -132,8 +133,9 @@ genericMain searchAlg name timeout = do
         
 
   -- setup all the heuristics
-  (heuristics :: [(GameType, Handle)]) <- forM heuristics $ \(gtype, heuCmd) -> do    
-    (heuPort, heuSock) <- listenOnUnusedPort    
+  let heuristics' = zip heuristics [12341, 12342, 12343 :: PortNumber]
+  (heuristics :: [(GameType, Handle)]) <- forM heuristics' $ \((gtype, heuCmd), heuPort) -> do    
+    heuSock <- listenOn (PortNumber heuPort)
     printf "GAMETREE: starting heuristic\n"
     let cmd = heuCmd ++ " " ++ show heuPort
     printf "GAMETREE: starting heuristic with command: %s\n" cmd
