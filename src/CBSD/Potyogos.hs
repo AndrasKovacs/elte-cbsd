@@ -30,8 +30,8 @@ data Cell   = Empty | Filled Player deriving (Eq, Show)
 ------------------------------------------------------------
     
 cols, rows :: Int
-cols = 7
-rows = 6
+cols = 6
+rows = 7
 
 ixRange :: (Ix, Ix)
 ixRange = ((0, 0), (rows - 1, cols - 1))

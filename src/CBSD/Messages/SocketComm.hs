@@ -25,7 +25,6 @@ import qualified Data.ByteString.Lazy.Char8 as LB
 
 ------------------------------------------------------------
 
--- | Try reading until the handle becomes non-empty
 getMessage :: forall a. FromJSON a => Handle -> IO a
 getMessage handle = do
   line <- B.hGetLine handle
@@ -41,14 +40,11 @@ putMessage handle a = do
       line' = replace "\"content\":[]" ("\"content\":{}"::B.ByteString)(LB.toStrict line)
   LB.hPutStrLn handle line'
   
--- | Send request, then get response
 request :: (ToJSON a, FromJSON b) => Handle -> a -> IO b
 request handle a = do
   putMessage handle a
   getMessage handle
 
--- | Get request, make response and send it
---   If the request isn't valid, try reading again
 respond ::
   (FromJSON a, ToJSON a, ToJSON b) => Handle -> (a -> IO (Maybe b)) -> IO ()
 respond handle makeResponse = do
@@ -59,6 +55,9 @@ respond handle makeResponse = do
     =<< makeResponse req
 
 
+
+-- DEPRECATED: it's based on my poor grasp of sockets, i. e. we don't want to listen
+-- inside this function, but we should rather pass in a socket as argument.
 registerAtCenter ::
      IO (PortNumber, PortNumber)     -- ^ Port of center, port of home
   -> String                          -- ^ Component name
