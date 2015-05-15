@@ -38,8 +38,7 @@ mkMove moves p s m  = fromMaybe
    (error $ printf "EVALUATE_MOVE: invalid move: %s\n" (show $ encode m))
    (moves p s m)
 
-logicArgErr     = "usage: logic CENTER_PORT"
-specificTreeErr = "usage: tree CENTER_PORT HEURISTIC_COMMAND"
+logicArgErr     = "usage: logic CENTER_PORT HOME_PORT"
 heuArgErr       = "usage: heuristic GAMETREE_PORT"
 
 potyogosHeu :: IO ()

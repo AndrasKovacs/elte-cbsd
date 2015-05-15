@@ -1,9 +1,7 @@
 
-1. _mask the request/response pairs!!!
-2. get home sockets explicitly !!
+LINUX std GUI-k: exit message-re lefagy:
 
-3. Use one home socket for all heu and center, but fucking learn how to do that!!
-
+SocketMessageSender request: {"messageType":"STOP_GAME","content":{"id":2}}
 
 
 
