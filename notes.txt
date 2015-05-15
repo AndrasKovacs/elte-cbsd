@@ -1,7 +1,15 @@
 
-LINUX std GUI-k: exit message-re lefagy:
+LINUX std GUI-k: 
 
 SocketMessageSender request: {"messageType":"STOP_GAME","content":{"id":2}}
 
 
+Ember-Gép:
 
+Központ hibával válaszol GET_POSSIBLE_MOVES-ra:
+
+
+15 May 2015 10:29:46  INFO SocketClient - Sending request (to AlphaBetaTree/4555): {"content":{"gameId":1,"state":{"id":0,"status":"ONGOING","board":[[0,0,0,0,0,0,2],[0,0,1,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[2,0,0,0,0,0,1]],"nextPlayer":"PLAYER_2"},"next":"PLAYER_2","moves":[{"from":{"x":6,"y":0},"to":{"x":5,"y":0}},{"from":{"x":6,"y":0},"to":{"x":6,"y":1}},{"from":{"x":6,"y":0},"to":{"x":5,"y":1}},{"from":{"x":0,"y":6},"to":{"x":1,"y":6}},{"from":{"x":0,"y":6},"to":{"x":0,"y":5}},{"from":{"x":0,"y":6},"to":{"x":1,"y":5}},{"from":{"x":6,"y":0},"to":{"x":4,"y":0}},{"from":{"x":6,"y":0},"to":{"x":4,"y":1}},{"from":{"x":6,"y":0},"to":{"x":5,"y":2}},{"from":{"x":6,"y":0},"to":{"x":6,"y":2}},{"from":{"x":0,"y":6},"to":{"x":0,"y":4}},{"from":{"x":0,"y":6},"to":{"x":1,"y":4}},{"from":{"x":0,"y":6},"to":{"x":2,"y":5}},{"from":{"x":0,"y":6},"to":{"x":2,"y":6}}]},"messageType":"TURN"}
+15 May 2015 10:29:46  INFO SocketClient - Request sent
+15 May 2015 10:29:46  INFO AbstractSocketWorker - Processing request: {"messageType":"POSSIBLE_MOVES","content":{"state":{"status":"ONGOING","nextPlayer":"PLAYER_2","board":[[0,0,0,0,0,0,2],[0,0,1,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[2,0,0,0,0,0,1]],"id":0}}}
+15 May 2015 10:29:46  INFO AbstractSocketWorker - Answer is {"content":{"message":"Error during processing: Unknown message type: POSSIBLE_MOVES"},"messageType":"ERROR"}
