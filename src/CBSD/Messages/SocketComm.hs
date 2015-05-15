@@ -17,11 +17,11 @@ import Data.ByteString.Search
 import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy.Char8 as LB
  
--- | Try grabbing ports until there's a unused one.
-listenOnUnusedPort :: IO (PortNumber, Socket)
-listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
-  catch ((port,) <$> listenOn (PortNumber port))
-        (\(_ :: IOException) -> go (port + 1))  
+-- -- | Try grabbing ports until there's a unused one.
+-- listenOnUnusedPort :: IO (PortNumber, Socket)
+-- listenOnUnusedPort = ($ 2000) $ fix $ \go port ->
+--   catch ((port,) <$> listenOn (PortNumber port))
+--         (\(_ :: IOException) -> go (port + 1))  
 
 ------------------------------------------------------------
 
@@ -60,18 +60,16 @@ respond handle makeResponse = do
 
 
 registerAtCenter ::
-     IO PortNumber     -- ^ Port of center
-  -> String            -- ^ Component name
+     IO (PortNumber, PortNumber)     -- ^ Port of center, port of home
+  -> String                          -- ^ Component name
   -> [GameType]        
   -> ComponentType     
-  -> IO (PortNumber, Socket, PortNumber, Handle) -- ^ CenterInPort, CenterInSock, CenterOutPort, hCenterOut
-registerAtCenter getCenterOutPort name gameTypes componentType = do
+  -> IO (PortNumber, Socket, PortNumber, Handle) -- ^ home port, CenterInSock, CenterOutPort, hCenterOut
+registerAtCenter getPortArgs name gameTypes componentType = do
   hSetBuffering stdout LineBuffering
 
   -- Get center port number
-  printf "getting port number of center\n"
-  centerOutPort <- getCenterOutPort
-  printf "%s: acquired port number: %s\n" (show componentType) (show centerOutPort)  
+  (centerOutPort, centerInPort) <- getPortArgs
 
   -- Connect to center
   hCenterOut <- fix $ \again -> do
@@ -85,7 +83,7 @@ registerAtCenter getCenterOutPort name gameTypes componentType = do
   printf "%s: connected\n" (show componentType)
 
   -- Accept center
-  (centerInPort, centerInSock) <- listenOnUnusedPort
+  centerInSock <- listenOn (PortNumber centerInPort)
   printf "%s: listening for center on port %s\n" (show componentType) (show centerInPort)
   
   putMessage hCenterOut (Req_CONNECT $

@@ -1,5 +1,5 @@
 
-{-# LANGUAGE LambdaCase, RankNTypes, ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE LambdaCase, RankNTypes, ScopedTypeVariables, FlexibleContexts, MonoLocalBinds #-}
 
 module CBSD.Components.Logic where
 
@@ -19,18 +19,18 @@ main ::
      forall state move.
      (FromJSON state, ToJSON state,
       FromJSON move, ToJSON move)
-  => IO PortNumber                                          -- ^ Port of center
+  => IO (PortNumber, PortNumber)                            -- ^ Port of center, home port
   -> (Player -> state -> [MoveAndBoard state move])         -- ^ Possible moves
   -> state                                                  -- ^ Start state
   -> (Player -> state -> move -> (Maybe state, TurnStatus)) -- ^ Update state with move
   -> String                                                 -- ^ Name of component
   -> GameType                                               -- ^ Game type
   -> IO ()
-main getCenterOutPort moves startState makeMove name gameType = do
+main getPortArgs moves startState makeMove name gameType = do
 
   (centerInPort, centerInSock, centerOutPort, hCenterOut) <-
     registerAtCenter
-      getCenterOutPort
+      getPortArgs
       name
       [gameType]
       GAMELOGIC
@@ -43,7 +43,7 @@ main getCenterOutPort moves startState makeMove name gameType = do
         (CL_GET_START_STATE :: CenterLogic state move) -> do
           printf "LOGIC: received GET_START_STATE\n"
           let resp = LC_GET_START_STATE $ StateWrap $ State 0 ONGOING startState PMax
---          printf "Sending response: %s\n" (show $ encode resp)
+          printf "Sending response: %s\n" (show $ encode resp)
           pure $ Just $ resp
         
         CL_EVALUATE_MOVE (ReqEvaluateMove strec move) -> do
@@ -60,7 +60,7 @@ main getCenterOutPort moves startState makeMove name gameType = do
           pure $ Just resp
         
         CL_POSSIBLE_MOVES (ReqPossibleMoves (State _ _ state player)) -> do
-          printf "received POSSIBLE_MOVES req"
+          printf "received POSSIBLE_MOVES: %s\n" (show $ encode msg)
           let resp = LC_POSSIBLE_MOVES $ ResPossibleMoves (moves player state)
           printf "sending possible moves %s\n" (show $ encode resp)          
           pure $ Just resp

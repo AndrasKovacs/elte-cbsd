@@ -18,7 +18,7 @@ library
     CBSD.Potyogos,                       
     CBSD.Ataxx,
     CBSD.Search,
-    CBSD.Utils.GetPortArg,
+    CBSD.Utils.GetPortArgs,
     CBSD.Messages.TH,
     CBSD.Messages.Types,
     CBSD.Messages.SocketComm,
@@ -109,51 +109,37 @@ executable ataxx-heu
                 , process
                 , stringsearch >= 0.3.6.6
 
--- executable potyogos-heu
+executable potyogos-heu
            
---   default-language: Haskell2010           
---   hs-source-dirs: TestExecs/Components
---   main-is: PotyogosHeu.hs
---   other-modules: Execs
+  default-language: Haskell2010           
+  hs-source-dirs: TestExecs/Components
+  main-is: PotyogosHeu.hs
+  other-modules: Execs
    
   
---   build-depends:
---                     aeson
---                 , base >= 4.7 && <4.9
---                 , elte-cbsd-games
---                 , network
---                 , process
---                 , stringsearch >= 0.3.6.6
+  build-depends:
+                    aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process
+                , stringsearch >= 0.3.6.6
 
--- executable potyogos-logic
+executable potyogos-logic
            
---   default-language: Haskell2010           
---   hs-source-dirs: TestExecs/Components
---   main-is: PotyogosLogic.hs
---   other-modules: Execs
+  default-language: Haskell2010           
+  hs-source-dirs: TestExecs/Components
+  main-is: PotyogosLogic.hs
+  other-modules: Execs
    
   
---   build-depends:
---                     aeson
---                 , base >= 4.7 && <4.9
---                 , elte-cbsd-games
---                 , network
---                 , process
---                 , stringsearch >= 0.3.6.6
-
--- executable potyogos-tree-with-heu
-           
---   default-language: Haskell2010           
---   hs-source-dirs: TestExecs/Components
---   main-is: PotyogosTreeWithHeu.hs
---   other-modules: Execs
-   
-  
---   build-depends:
---                   aeson
---                 , base >= 4.7 && <4.9
---                 , elte-cbsd-games
---                 , network
+  build-depends:
+                    aeson
+                , base >= 4.7 && <4.9
+                , elte-cbsd-games
+                , network
+                , process
+                , stringsearch >= 0.3.6.6
 
 executable ataxx-logic
            
@@ -181,7 +167,22 @@ executable alpha-beta-tree
                 , elte-cbsd-games
                 , network
                 , process
-                , stringsearch >= 0.3.6.6
+              , stringsearch >= 0.3.6.6
+
+
+-- executable potyogos-tree-with-heu
+           
+--   default-language: Haskell2010           
+--   hs-source-dirs: TestExecs/Components
+--   main-is: PotyogosTreeWithHeu.hs
+--   other-modules: Execs
+   
+  
+--   build-depends:
+--                   aeson
+--                 , base >= 4.7 && <4.9
+--                 , elte-cbsd-games
+--                 , network              
 
                                
 -- executable ataxx

@@ -1,7 +1,9 @@
 
+1. _mask the request/response pairs!!!
+2. get home sockets explicitly !!
 
-POTYOGOS MOVE FORMAT:
+3. Use one home socket for all heu and center, but fucking learn how to do that!!
 
-to x -ben az adat
+
 
 
