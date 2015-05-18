@@ -166,7 +166,7 @@ genericMain searchAlg name timeout = do
 
     case line^? _Value . key "content" . key "state" . key "board" . _JSON :: Maybe [[Int]] of
       Just board -> case (length board, length $ head board) of
-        (6  , 7)  -> case decodeStrict line :: Maybe (CenterTree Potyogos.GStateJSON Potyogos.MoveJSON) of
+        (7  , 6)  -> case decodeStrict line :: Maybe (CenterTree Potyogos.GStateJSON Potyogos.MoveJSON) of
           Just (CT_TURN (ReqTurn gameId (State _ _ state player) _ _)) -> do
             move <- fromJust <$> potyogosSearch player state
             putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Potyogos.GStateJSON Potyogos.MoveJSON)
