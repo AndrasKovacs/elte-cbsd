@@ -29,13 +29,13 @@ import Text.Read
 import qualified Data.ByteString as B
     
 
--- GENERIC MAIN
-genericMain ::
+main ::
      (forall state move. Search IO Score state move) -- ^ Search algorithm
   -> String                                          -- ^ Name of component
   -> Int                                             -- ^ Search timeout
+  -> Int                                             -- ^ Maximum depth
   -> IO ()
-genericMain searchAlg name timeout = do
+main searchAlg name timeout maxDepth = do
 
   let usage =
         "usage: tree CENTER_PORT HOME_PORT [-ataxxHeu=COMMAND] " ++
@@ -110,26 +110,25 @@ genericMain searchAlg name timeout = do
 
   -- set up heu and moves (NOTE THE MASKING!)           
   let heu :: forall state. (FromJSON state, ToJSON state) => Handle -> state -> Player -> IO Score
-      heu hHeu state player = mask_ $ do
-        printf "requesting heuristic value\n"
+      heu hHeu state player = uninterruptibleMask_ $ do
+--        printf "GAMETREE: requesting heuristic value\n"
         request hHeu (TH_EVAL state player :: TreeHeu state) >>= \case
           (TH_EVAL_RE score :: TreeHeu state) -> pure $ Score score
           other -> 
             error $
               printf "GAMETREE: expected EVAL_RE message, got %s\n"
                 (show $ encode other)
-
   
       moves ::
            forall state move .
            (FromJSON state, FromJSON move, ToJSON state, ToJSON move) 
-        => Player -> state -> IO [(state, move)]
-      moves player state = mask_ $ do
+        => Int -> Player -> state -> IO [(state, move)]
+      moves gameId player state = uninterruptibleMask_ $ do
         
         let msg = (TC_POSSIBLE_MOVES $
-                 ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
+                 ReqPossibleMoves $ State gameId ONGOING state player :: TreeCenter state move)
                   
-        printf "requesting possible moves from center: %s\n" (show $ encode msg)        
+        printf "GAMETREE: requesting possible moves from center: %s\n" (show $ encode msg)        
         res <- request hCenterOut msg
         case (res :: CenterTree state move) of
           CT_POSSIBLE_MOVES (ResPossibleMoves moves) ->
@@ -149,15 +148,14 @@ genericMain searchAlg name timeout = do
       potyogosHeu :: Potyogos.GStateJSON -> Player -> IO Score
       potyogosHeu = heu (fromMaybe (error "no heuristic available for Potyogos") $ lookup Potyogos heuristics)
 
-      ataxxSearch :: Player -> Ataxx.GStateJSON -> IO (Maybe Ataxx.MoveJSON)
-      ataxxSearch = nextMove True moves ataxxHeu searchAlg timeout 1
+      ataxxSearch :: Int -> Player -> Ataxx.GStateJSON -> IO (Maybe Ataxx.MoveJSON)
+      ataxxSearch gameId = nextMove True (moves gameId) ataxxHeu searchAlg timeout maxDepth
 
-      agarakSearch :: Player -> Ataxx.GStateJSON -> IO (Maybe Ataxx.MoveJSON)
-      agarakSearch = nextMove True moves agarakHeu searchAlg timeout 1
+      agarakSearch :: Int -> Player -> Ataxx.GStateJSON -> IO (Maybe Ataxx.MoveJSON)
+      agarakSearch gameId = nextMove True (moves gameId) agarakHeu searchAlg timeout maxDepth
 
-      potyogosSearch :: Player -> Potyogos.GStateJSON -> IO (Maybe Potyogos.MoveJSON)
-      potyogosSearch = nextMove True moves potyogosHeu searchAlg timeout 1
-      
+      potyogosSearch :: Int -> Player -> Potyogos.GStateJSON -> IO (Maybe Potyogos.MoveJSON)
+      potyogosSearch gameId = nextMove True (moves gameId) potyogosHeu searchAlg timeout maxDepth   
 
   forever $ do
     (hCenterIn, _, _) <- accept homeSock   
@@ -168,95 +166,19 @@ genericMain searchAlg name timeout = do
       Just board -> case (length board, length $ head board) of
         (7  , 6)  -> case decodeStrict line :: Maybe (CenterTree Potyogos.GStateJSON Potyogos.MoveJSON) of
           Just (CT_TURN (ReqTurn gameId (State _ _ state player) _ _)) -> do
-            move <- fromJust <$> potyogosSearch player state
+            move <- fromJust <$> potyogosSearch gameId player state
             putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Potyogos.GStateJSON Potyogos.MoveJSON)
           _ -> invalidLine
         (7  , 7)  -> case decodeStrict line :: Maybe (CenterTree Ataxx.GStateJSON Ataxx.MoveJSON) of
           Just (CT_TURN (ReqTurn gameId (State _ _ state player) _ _)) -> do
-            move <- fromJust <$> ataxxSearch player state
+            move <- fromJust <$> ataxxSearch gameId player state
             putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Ataxx.GStateJSON Ataxx.MoveJSON)
           _ -> invalidLine
         (10 , 10) -> case decodeStrict line :: Maybe (CenterTree Ataxx.GStateJSON Ataxx.MoveJSON) of
           Just (CT_TURN (ReqTurn gameId (State _ _ state player) _ _)) -> do
-            move <- fromJust <$> ataxxSearch player state
+            move <- fromJust <$> ataxxSearch gameId player state
             putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Ataxx.GStateJSON Ataxx.MoveJSON)
           _ -> invalidLine
       _ -> invalidLine
 
     hClose hCenterIn
-
-
-
-
-
-
-
--- NOTE: AGARAK and ATTAX have exactly the same message formats!
-
--- -- specific main
--- main ::
---      forall state move.
---      (FromJSON state, ToJSON state,
---       FromJSON move, ToJSON move)
---   => IO PortNumber                      -- ^ Port of central component
---   -> (PortNumber -> IO ())              -- ^ Start heuristic 
---   -> Search IO Score state move         -- ^ Search algorithm
---   -> String                             -- ^ Name of component
---   -> [GameType]                         -- ^ Game types
---   -> Int                                -- ^ Search timeout
---   -> IO ()
--- main getCenterOutPort startHeu searchAlg name gameTypes timeout = do
-
---   -- Set up heuristic
---   (hPortNumber, hHeu) <- do
---     (heuPort, heuSock) <- listenOnUnusedPort
---     printf "GAMETREE: starting heuristic\n"
---     startHeu heuPort
---     printf "GAMETREE: listening for heuristic on port %s\n" (show heuPort)
---     (hHeu, _, _) <- accept heuSock
---     hSetBuffering hHeu LineBuffering
---     printf "GAMETREE: accepted heuristic\n"
---     pure (heuPort, hHeu)          
-  
---   -- Register at center
---   (portCenterIn, centerInSock, portCenterOut, hCenterOut) <-
---     registerAtCenter
---       getCenterOutPort
---       name
---       gameTypes
---       GAMETREE
-
---   -- Set up search
---   let
---     heu :: state -> Player -> IO Score
---     heu state player = do
---       request hHeu (TH_EVAL state player :: TreeHeu state) >>= \case
---         (TH_EVAL_RE score :: TreeHeu state) -> pure $ Score score
---         other -> 
---           error $
---             printf "GAMETREE: expected EVAL_RE message, got %s\n"
---               (show $ encode other)
-
---     moves :: Player -> state -> IO [(state, move)]
---     moves player state = do
---       res <- request hCenterOut $ (TC_POSSIBLE_MOVES $
---                ReqPossibleMoves $ State 0 ONGOING state player :: TreeCenter state move)
---       case (res :: CenterTree state move) of
---         CT_POSSIBLE_MOVES (ResPossibleMoves moves) ->
---           pure $ map (\(MoveAndBoard s m) -> (s, m)) moves
---         other ->
---           error $
---             printf "GAMETREE: expected POSSIBLE_MOVES response, got %s\n"
---               (show $ encode other)
-
---     search :: Player -> state -> IO (Maybe move)
---     search = nextMove True moves heu searchAlg timeout maxBound    
-
---   -- Main loop
---   forever $ do
---     (hCenterIn, _, _) <- accept centerInSock
---     respond hCenterIn $ \case    
---       (CT_TURN (ReqTurn gameId (State _ _ state player) _ _) :: CenterTree state move) -> do
---         Just move <- search player state
---         pure $ Just $ (TC_TURN $ ResTurn gameId move :: TreeCenter state move)
---     hClose hCenterIn

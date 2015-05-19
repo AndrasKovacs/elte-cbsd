@@ -96,7 +96,7 @@ nextMove verbose moves heu alg timeout maxDepth p s = do
         go (d + 1)
   
   defaultMove  <- moves p s <&> (^? _head._2)
-  computedMove <- runTimeoutWHNF timeout $ go 2
+  computedMove <- runTimeoutWHNF timeout $ go 0
 
   when verbose $ 
     printf "nextMove verbose mode: score and max depth: %s\n\n"

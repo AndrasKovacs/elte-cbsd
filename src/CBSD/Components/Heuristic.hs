@@ -40,10 +40,13 @@ main getPort heu = do
   
   forever $ respond handle $ \case
      TH_CLOSE -> do
-       printf "HEURISTIC: received CLOSE message from game tree\n"
-       printf "HEURISTIC: closing now\n"
+--      printf "HEURISTIC: received CLOSE message from game tree\n"
+--      printf "HEURISTIC: closing now\n"
        exitSuccess
-     TH_EVAL board player ->
-       pure $ Just $ (TH_EVAL_RE (heu board player) :: TreeHeu state)
+     TH_EVAL board player -> do
+--       printf "HEURISTIC: reveived EVAL request\n"
+       let msg = TH_EVAL_RE (heu board player) :: TreeHeu state
+--       printf "HEURISTIC: sending response: %s\n" (show $ encode msg)
+       pure $ Just msg                   
      _ -> pure Nothing          
             
