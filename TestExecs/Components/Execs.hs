@@ -52,7 +52,15 @@ ataxxLogic = withSocketsDo $
     "AtaxxLogic"
     Ataxx
 
-alphaBetaTree :: IO ()
-alphaBetaTree = withSocketsDo $ 
-  Tree.main alphaBeta "AlphaBetaTree" 10000000 maxBound
+alphaBetaTree3 :: IO ()
+alphaBetaTree3 = withSocketsDo $ 
+  Tree.main alphaBeta "AlphaBetaTree" 3000000 maxBound
+
+alphaBetaTree5 :: IO ()
+alphaBetaTree5 = withSocketsDo $ 
+  Tree.main alphaBeta "AlphaBetaTree" 5000000 maxBound
+
+alphaBetaTree10 :: IO ()
+alphaBetaTree10 = withSocketsDo $ 
+  Tree.main alphaBeta "AlphaBetaTree" 10000000 maxBound  
   
