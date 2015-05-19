@@ -17,6 +17,7 @@ library
   exposed-modules:     
     CBSD.Potyogos,                       
     CBSD.Ataxx,
+    CBSD.Agarak,
     CBSD.Search,
     CBSD.Utils.GetPortArgs,
     CBSD.Messages.TH,

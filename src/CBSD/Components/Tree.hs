@@ -6,6 +6,7 @@ import CBSD.Messages.SocketComm
 import CBSD.Messages.Types
 import CBSD.Search
 import CBSD.Utils.GetPortArgs
+import qualified CBSD.Agarak as Agarak
 import qualified CBSD.Ataxx as Ataxx
 import qualified CBSD.Potyogos as Potyogos
 
@@ -142,7 +143,7 @@ main searchAlg name timeout maxDepth = do
       ataxxHeu = heu (fromMaybe (error "no heuristic available for Ataxx") $ lookup Ataxx heuristics)
 
       -- We use Ataxx messages for this too!!!
-      agarakHeu :: Ataxx.GStateJSON -> Player -> IO Score
+      agarakHeu :: Agarak.GStateJSON -> Player -> IO Score
       agarakHeu = heu (fromMaybe (error "no heuristic available for Agarak") $ lookup Agarak heuristics)
 
       potyogosHeu :: Potyogos.GStateJSON -> Player -> IO Score
@@ -151,7 +152,7 @@ main searchAlg name timeout maxDepth = do
       ataxxSearch :: Int -> Player -> Ataxx.GStateJSON -> IO (Maybe Ataxx.MoveJSON)
       ataxxSearch gameId = nextMove True (moves gameId) ataxxHeu searchAlg timeout maxDepth
 
-      agarakSearch :: Int -> Player -> Ataxx.GStateJSON -> IO (Maybe Ataxx.MoveJSON)
+      agarakSearch :: Int -> Player -> Agarak.GStateJSON -> IO (Maybe Agarak.MoveJSON)
       agarakSearch gameId = nextMove True (moves gameId) agarakHeu searchAlg timeout maxDepth
 
       potyogosSearch :: Int -> Player -> Potyogos.GStateJSON -> IO (Maybe Potyogos.MoveJSON)
@@ -174,10 +175,10 @@ main searchAlg name timeout maxDepth = do
             move <- fromJust <$> ataxxSearch gameId player state
             putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Ataxx.GStateJSON Ataxx.MoveJSON)
           _ -> invalidLine
-        (10 , 10) -> case decodeStrict line :: Maybe (CenterTree Ataxx.GStateJSON Ataxx.MoveJSON) of
+        (10 , 10) -> case decodeStrict line :: Maybe (CenterTree Agarak.GStateJSON Agarak.MoveJSON) of
           Just (CT_TURN (ReqTurn gameId (State _ _ state player) _ _)) -> do
-            move <- fromJust <$> ataxxSearch gameId player state
-            putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Ataxx.GStateJSON Ataxx.MoveJSON)
+            move <- fromJust <$> agarakSearch gameId player state
+            putMessage hCenterIn (TC_TURN $ ResTurn gameId move :: TreeCenter Agarak.GStateJSON Agarak.MoveJSON)
           _ -> invalidLine
       _ -> invalidLine
 
