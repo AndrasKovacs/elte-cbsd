@@ -54,13 +54,20 @@ ataxxLogic = withSocketsDo $
 
 alphaBetaTree3 :: IO ()
 alphaBetaTree3 = withSocketsDo $ 
-  Tree.main alphaBeta "AlphaBetaTree" 3000000 maxBound
+  Tree.main alphaBeta "AlphaBeta_3_sec" 3000000 maxBound
 
 alphaBetaTree5 :: IO ()
 alphaBetaTree5 = withSocketsDo $ 
-  Tree.main alphaBeta "AlphaBetaTree" 5000000 maxBound
+  Tree.main alphaBeta "AlphaBeta_5_sec" 5000000 maxBound
 
 alphaBetaTree10 :: IO ()
 alphaBetaTree10 = withSocketsDo $ 
-  Tree.main alphaBeta "AlphaBetaTree" 10000000 maxBound  
-  
+  Tree.main alphaBeta "AlphaBeta_10_sec" 10000000 maxBound
+
+minimax3 :: IO ()
+minimax3 = withSocketsDo $
+  Tree.main minimax "Minimax_3_sec" 3000000 maxBound
+
+minimax5 :: IO ()
+minimax5 = withSocketsDo $
+  Tree.main minimax "Minimax_3_sec" 3000000 maxBound
