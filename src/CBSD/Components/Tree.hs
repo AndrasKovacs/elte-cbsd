@@ -137,7 +137,7 @@ main searchAlg name timeout maxDepth = do
         $ lookup game heuristics
 
       search gameId gameType =
-        nextMove True (moves gameId) (heu $ getHeuHandle gameType) alphaBeta timeout maxDepth
+        nextMove True (moves gameId) (heu $ getHeuHandle gameType) searchAlg timeout maxDepth
         
   -- Main loop
   forever $ do
